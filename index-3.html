@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#101d2a"/><meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>AlpRiders CH — GPS, Rotas e Grupos Privados</title><meta name="description" content="AlpRiders CH — protótipo de rotas de moto na Suíça"/>
+<link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/>
+<link rel="preconnect" href="https://unpkg.com"/><link rel="preconnect" href="https://tile.openstreetmap.org"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzx7ab7kfyTD3GuJCwtnZ9N6O8=" crossorigin=""/>
+<style>
+:root{--bg:#0c1722;--panel:#142432;--panel2:#1c3242;--ink:#f5f7f6;--sub:#b1c1ce;--stroke:#2c4555;--accent:#fa8b42;--teal:#52d1cf;--danger:#ff7373;--shadow:0 18px 50px #0005;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color-scheme:dark}
+*{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font-size:15px;min-height:100%;}button,input,select{font:inherit;}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.app{max-width:720px;min-height:100dvh;margin:auto;padding-bottom:calc(89px + env(safe-area-inset-bottom));background:linear-gradient(180deg,#112333 0,var(--bg) 400px)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 14px;gap:12px}.brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:850;letter-spacing:-.7px}.logo{background:linear-gradient(135deg,var(--accent),#dd6043);width:43px;height:43px;display:grid;place-items:center;border-radius:13px;box-shadow:0 6px 20px #e675523a;font-size:22px}.brand small{display:block;letter-spacing:1.6px;font-size:10px;font-weight:800;color:var(--sub);margin-top:3px}.demo{font-size:10px;font-weight:900;color:#ffc498;background:#643a2a;border:1px solid #905337;border-radius:100px;padding:7px 9px;letter-spacing:.7px}
+.screen{display:none;padding:0 15px 18px}.screen.active{display:block}.hero{padding:14px 4px 15px}.eyebrow{color:var(--teal);font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:2px}.hero h1{font-size:29px;letter-spacing:-.8px;margin:7px 0}.hero p{color:var(--sub);font-size:13px;line-height:1.5;margin:0}.card{background:var(--panel);border:1px solid var(--stroke);border-radius:21px;padding:16px;margin-bottom:14px;box-shadow:0 5px 30px #0002}.row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.pill{border-radius:100px;padding:7px 12px;background:#203846;color:#a3e9e5;font-size:11px;font-weight:800}.muted{color:var(--sub)}.tiny{font-size:12px;line-height:1.48}.tag{color:var(--teal);font-size:12px;font-weight:800}.heading{font-size:18px;margin:0 0 8px;letter-spacing:-.2px}.subheading{font-size:14px;font-weight:850;margin:0 0 8px}.notice{background:#28383e;border:1px solid #41626a;padding:11px 12px;border-radius:13px;color:#c9ebe8;font-size:12px;line-height:1.5}
+.mapbox{position:relative;height:min(48dvh,460px);min-height:290px;border-radius:20px;overflow:hidden;background:#173347;border:1px solid var(--stroke)} #map{height:100%;width:100%;z-index:1}.mapfallback{position:absolute;inset:0;display:grid;align-content:center;justify-items:center;text-align:center;padding:30px;background:radial-gradient(circle at 50% 30%,#34556c,#132638 65%);color:#d8e8f3;z-index:0}.mapfallback span{font-size:44px}.mapbadge{position:absolute;bottom:12px;left:12px;z-index:500;background:#0b1a29e3;color:white;border:1px solid #56717b;border-radius:12px;padding:9px 12px;font-size:11px;max-width:70%}.maptools{position:absolute;top:13px;right:12px;z-index:500;display:flex;flex-direction:column;gap:8px}.maptools button{background:#112433ed;border:1px solid #527082;color:#fff;border-radius:12px;font-size:18px;width:43px;height:42px;box-shadow:var(--shadow)}
+.btn{border:0;border-radius:13px;padding:13px 14px;font-weight:850;background:var(--accent);color:#251a13;font-size:13px}.btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--stroke)}.btn.outline{border:1px solid #579b9d;color:#9be7e4;background:#163639}.btn.warn{background:#402c30;color:#ffc5c5}.btn:disabled{opacity:.48;cursor:not-allowed}.buttons{display:flex;gap:8px;flex-wrap:wrap}.buttons>.btn{flex:1;min-width:105px}.quick{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:thin}.quick button{background:var(--panel2);border:1px solid var(--stroke);border-radius:999px;padding:9px 12px;color:var(--ink);font-size:12px;white-space:nowrap}.footnote{font-size:11px;color:#9aaebe;line-height:1.55}.count{color:var(--teal);font-weight:850}.stats{display:flex;gap:10px;margin:12px 0}.stat{flex:1;background:#1b3340;border:1px solid #38515a;border-radius:13px;padding:11px}.stat b{display:block;font-size:16px}.stat span{color:var(--sub);font-size:11px}
+.input,.select{width:100%;background:#0f202e;color:white;border:1px solid #365463;border-radius:12px;padding:12px 13px;margin:7px 0 11px}.field{display:block;font-size:12px;font-weight:750}.listitem{padding:12px 0;border-bottom:1px solid var(--stroke)}.listitem:last-child{border-bottom:0}.listtitle{font-weight:800;font-size:14px;word-break:break-word}.smallactions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.smallactions button{font-size:12px;border:1px solid #426676;background:#203b4d;color:#e1eff7;padding:8px 11px;border-radius:10px}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:720px;display:flex;justify-content:space-around;border-top:1px solid #37505c;background:#102231f5;backdrop-filter:blur(18px);padding:10px 8px calc(10px + env(safe-area-inset-bottom));z-index:2000}.nav button{background:transparent;border:0;color:#94aebc;width:25%;display:grid;justify-items:center;gap:4px;font-size:11px;font-weight:700}.nav button span{font-size:23px}.nav button.active{color:var(--accent)}
+.chatlog{height:300px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:11px;background:#0c1d29;border-radius:14px;border:1px solid var(--stroke);margin:13px 0}.bubble{padding:10px 13px;border-radius:15px 15px 5px 15px;max-width:88%;background:#2a4d52;align-self:flex-end;font-size:13px;overflow-wrap:anywhere}.bubble .bubblemeta{font-size:10px;color:#b8e0dc;margin-top:5px}.bubble.system{align-self:center;background:#263746;border-radius:12px;color:#c2d6df;max-width:100%;text-align:center}.send{display:flex;gap:8px}.send input{flex:1;min-width:0;background:#0c1e2b;border:1px solid var(--stroke);border-radius:12px;padding:12px;color:white}.send button{width:55px}.privacy{display:flex;gap:8px;align-items:flex-start}.privacy span:first-child{font-size:22px}
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%);background:#ecf8ed;color:#163a32;box-shadow:var(--shadow);border-radius:12px;z-index:2100;padding:11px 14px;font-size:12px;font-weight:750;max-width:90%;display:none;text-align:center}
+@media(min-width:721px){.nav{border-radius:15px 15px 0 0}.app{min-height:100vh}}
+
+.auto-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}.auto-form .full{grid-column:1/-1}
+.auto-form label{display:block;font-size:12px;font-weight:750;color:#e1edf3}.auto-form input,.auto-form select{margin:7px 0 3px}
+.surprise{font-size:16px;padding:16px;width:100%;margin-top:12px;background:linear-gradient(110deg,#ff9950,#ffc36d);color:#17202b}
+.autoresult{margin-top:12px;padding:12px;border-radius:12px;background:#14363a;border:1px solid #31595c;font-size:13px;line-height:1.55;color:#dbf4f3}
+.autoresult b{color:#f8f3df}.autoresult:empty{display:none}
+.gps-speed{display:flex;align-items:center;gap:12px}.gps-speed strong{font-size:30px;font-variant-numeric:tabular-nums}.gps-speed small{display:block;color:var(--sub);font-size:11px}
+@media(max-width:360px){.auto-form{grid-template-columns:1fr}}
+[hidden]{display:none!important}.nav button{width:20%}.nav .sos-tab{color:#ff9999}
+.sos-btn{background:#e84747!important;color:white!important;border:1px solid #fa8989!important}
+.button-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;flex:1;min-width:130px}
+.danger-card{border-color:#983f48;background:#35232b}.danger-card .heading{color:#ffcece}
+.coords{font-size:15px;font-weight:800;color:#9de3db;word-break:break-word;line-height:1.5}
+.sos-contacts-row{border-top:1px solid var(--stroke);padding:12px 0}.sos-contacts-row label{font-size:12px;font-weight:700}
+.sos-sms-buttons{display:grid;gap:8px;margin-top:14px}.sos-sms-buttons a{display:block;text-align:center;text-decoration:none;background:#19484d;color:#c0fffc;padding:13px;border-radius:12px;font-size:13px;font-weight:850;border:1px solid #387c78}
+#nav-guide{display:none;border-color:#356c7e;position:sticky;top:0;z-index:1001;background:#0e2935fa}
+.nav-primary{font-size:24px;font-weight:900;line-height:1.28;margin:13px 0 6px}
+.nav-mode #nav-guide{display:block}.nav-mode #nav-actions,.nav-mode #view-map .hero,.nav-mode #auto-planner,.nav-mode #speed-card,.nav-mode #route-creator{display:none}
+.nav-mode #view-map .mapbox{height:calc(100dvh - 330px);min-height:310px}.nav-mode #mapstatus{max-width:75%}
+.nav-mode .app{max-width:100%;}.nav-mode #view-map{padding-top:7px}
+@media(max-height:660px){.nav-mode #view-map .mapbox{height:48dvh}}
+
+
+.header-right{display:flex;align-items:flex-end;flex-direction:column;gap:5px}.lang-label{color:var(--sub);font-size:10px;font-weight:800}.header-right select{background:#162e40;color:#fff;border:1px solid #426275;border-radius:9px;padding:7px;max-width:134px;font-size:12px}
+.gps-one-button{width:100%;font-size:17px;padding:16px;background:linear-gradient(110deg,#f89854,#ffc274)}.gps-one-card{border:1px solid #835c45;background:linear-gradient(130deg,#172d3d,#2f2c32)}.speed-face{display:flex;gap:4px;align-items:baseline;color:#8ee9db}.speed-face strong{font-size:34px;font-variant-numeric:tabular-nums}.speed-face small{font-size:11px}#gps-one-info{margin:10px 0 0}
+.nav button{gap:3px}.nav button .nav-label{font-size:10px}.nav button>span:first-child{font-size:22px}#groups-online-settings summary{cursor:pointer;font-weight:850;line-height:1.6;padding:3px}
+.group-chip{padding:12px;border:1px solid var(--stroke);border-radius:14px;margin-top:9px;background:#0d2332;cursor:pointer;width:100%;text-align:left;color:var(--ink)}.group-chip.selected{border-color:var(--teal);background:#154048}.group-chip b{display:block}.group-chip small{color:var(--sub);display:block;margin-top:5px}#group-chatlog{height:260px;overflow-y:auto}.chat-date{font-size:10px;color:var(--sub)}
+@media(max-width:390px){.brand{font-size:18px}.header{padding:14px 10px}.demo{font-size:9px;padding:5px}.header-right select{max-width:110px}}.nav-mode #gps-one-card{display:none}
+</style></head>
+<body><div class="app">
+<header class="header"><div class="brand"><div class="logo">🏍️</div><div>AlpRiders <span style="color:var(--accent)">CH</span><small>RODAS LIVRES • SUÍÇA</small></div></div><div class="header-right"><label class="lang-label" for="language-picker">🌐 <span id="language-label">Idioma</span></label><select id="language-picker" aria-label="Escolher idioma"><option value="pt">Português</option><option value="fr">Français</option><option value="it">Italiano</option><option value="es">Español</option><option value="de">Deutsch</option><option value="en">English</option></select><span class="demo" id="demo-label">DEMONSTRAÇÃO</span></div></header>
+<main>
+<section class="screen active" id="view-map">
+<div class="hero"><div class="eyebrow">A tua estrada começa aqui</div><h1>O passeio começa onde quiseres.</h1><p>Parte do GPS atual, escolhe um ponto exato no mapa ou escreve uma localidade. Navegação experimental dentro da app.</p></div>
+
+<div class="card" id="auto-planner">
+  <div class="row"><h2 class="heading">🎲 Surpreende-me</h2><span class="pill">Passeio automático</span></div>
+  <p class="tiny muted">Escolhe como queres partir. A app tenta criar uma rota circular com partida e regresso ao ponto escolhido.</p>
+  <div class="auto-form">
+    <label class="full" for="start-mode">Partida
+      <select class="select" id="start-mode"><option value="gps" selected>📍 Posição atual pelo GPS</option><option value="pin">🗺️ Escolher ponto no mapa</option><option value="town">🏘️ Escrever uma localidade</option></select>
+    </label>
+    <div class="full" id="town-fields" hidden><label for="start-town">Nome da localidade
+      <input class="input" id="start-town" list="town-suggestions" autocomplete="address-level2" placeholder="Ex.: Sion, Lausanne, Lugano..."/>
+    </label></div>
+    <div class="full" id="pin-fields" hidden><button type="button" class="btn outline" id="choose-pin">Selecionar no mapa</button><p class="tiny muted" id="pin-status">Ainda não escolheste nenhum ponto.</p></div>
+    <datalist id="town-suggestions"><option value="Sion"><option value="Martigny"><option value="Montreux"><option value="Lausanne"><option value="Genève"><option value="Interlaken"><option value="Bern"><option value="Lugano"><option value="Davos"><option value="Chur"><option value="Zürich"><option value="Lucerne"><option value="Neuchâtel"></datalist>
+    <label for="ride-hours">Duração pretendida
+      <select class="select" id="ride-hours"><option value="60">1 hora</option><option value="120" selected>2 horas</option><option value="180">3 horas</option><option value="240">4 horas</option></select>
+    </label>
+    <label for="ride-style">Tipo de passeio
+      <select class="select" id="ride-style"><option value="mix">Surpresa</option><option value="curvas">Curvas e montanhas</option><option value="panorama">Paisagens alpinas</option><option value="lagos">Lagos e vales</option></select>
+    </label>
+  </div>
+  <button class="btn surprise" id="surprise-button">🎲 Criar passeio surpresa</button>
+  <div class="autoresult" id="surprise-result" role="status" aria-live="polite"></div>
+  <p class="footnote">Protótipo experimental: usa locais panorâmicos como pontos intermédios e um serviço público de rotas rodoviárias para automóveis. A duração pode variar. Não confirma que as estradas e passagens alpinas estão abertas, oferece indicações experimentais na página, mas não substitui um GPS homologado ou a verificação da estrada.</p>
+</div>
+<div class="card gps-one-card" id="gps-one-card">
+<div class="row"><div><div class="tag" id="single-gps-title">GPS + Navegação</div><p class="tiny muted" id="single-gps-tip">Um único botão para ligar o GPS, mostrar a velocidade e navegar nesta app quando houver uma rota.</p></div><div class="speed-face"><strong id="gps-one-speed">—</strong><small>km/h</small></div></div>
+<button id="gps-one-button" class="btn gps-one-button" type="button">📍 Ligar GPS + Navegação</button>
+<p id="gps-one-info" class="footnote" aria-live="polite">Sem rota, o botão mostra a tua posição e velocidade. Cria um passeio para receber orientação experimental no mapa.</p></div>
+<div class="card" id="speed-card" hidden><div class="row gps-speed"><div><small>Velocidade GPS</small><strong id="speed-val">—</strong> km/h</div><button class="btn ghost" id="speed-button">Ativar GPS</button></div><p class="footnote" style="margin-bottom:0">Precisa de autorização de localização e normalmente de um endereço HTTPS. Indicador de teste; não substitui o velocímetro da mota.</p></div>
+<div id="nav-guide" class="card" aria-live="polite"><div class="row"><span class="pill">🧭 Navegação dentro da app</span><b id="nav-kmh">— km/h</b></div><div class="nav-primary" id="nav-next">A aguardar GPS…</div><p class="tiny muted" id="nav-detail">Mantém a app aberta, com localização autorizada. Indicações aproximadas.</p><div class="buttons"><button class="btn warn" id="nav-stop">Terminar navegação</button><button class="btn sos-btn" id="nav-sos">🆘 SOS</button></div></div>
+<div class="buttons" id="nav-actions" hidden><button class="btn" id="nav-start">🧭 Iniciar navegação aqui</button><button class="btn sos-btn" id="map-sos">🆘 Emergência</button></div>
+<div class="mapbox"><div id="map"></div><div class="mapfallback" id="mapfallback"><span>🗻</span><b>Mapa da Suíça</b><p class="tiny">O mapa precisa de ligação à Internet.</p></div><div class="maptools"><button id="gpsbutton" title="Localização GPS" aria-label="Localização GPS" hidden>⌖</button><button id="swissbutton" title="Voltar à Suíça" aria-label="Voltar à Suíça">⌂</button></div><div class="mapbadge" id="mapstatus">Toca no mapa para marcar os pontos da tua rota.</div></div>
+<div class="card" id="route-creator" style="margin-top:14px"><div class="row"><b>🧭 Criar um percurso</b><span class="pill" id="points-label">0 pontos</span></div><p class="tiny muted">Marca a partida e o destino tocando no mapa, ou experimenta uma sugestão.</p><div class="quick"><button id="manual-gps-start">📍 Partida no meu GPS</button><button id="manual-map-start">🗺️ Partida no mapa</button><button data-quick="verbier">Exemplo: Martigny → Verbier</button></div><div class="buttons" style="margin-top:11px"><button class="btn ghost" id="clear-home">Limpar</button><button class="btn" id="goto-routes">Ver rota →</button></div></div>
+</section>
+<section class="screen" id="view-routes"><div class="hero"><div class="eyebrow">Planeia o passeio</div><h1>As minhas rotas</h1><p>Cria, guarda e exporta percursos. Nesta versão ficam apenas neste telemóvel.</p></div>
+<div class="card"><div class="row"><h2 class="heading">Nova rota</h2><span class="pill" id="points-count">0 / 12 pontos</span></div><div class="stats"><div class="stat"><b id="dist">—</b><span>Distância estimada</span></div><div class="stat"><b id="time">—</b><span>Tempo estimado</span></div></div><p class="tiny muted" id="route-message">Marca pelo menos dois pontos no mapa.</p><label class="field" for="route-name">Nome da rota</label><input class="input" id="route-name" maxlength="70" placeholder="Ex.: Passeio pelo Valais" value="Passeio pelos Alpes"/>
+<div class="buttons"><button class="btn outline" id="calc-route">Calcular estrada</button><button class="btn ghost" id="undo-point">Desfazer ponto</button></div><div class="buttons" style="margin-top:9px"><button class="btn" id="save-route">Guardar no telemóvel</button><button class="btn ghost" id="export-gpx">Exportar GPX</button></div><p class="footnote">O cálculo de estrada usa um serviço público experimental para automóveis. Não substitui navegação GPS para motociclos. Consulta sempre os encerramentos das passagens alpinas.</p></div>
+<div class="card"><div class="row"><h2 class="heading">Percursos guardados</h2><span class="pill" id="saved-count">0 guardados</span></div><div id="saved-list"><p class="tiny muted">Ainda não tens percursos guardados.</p></div></div></section>
+<section class="screen" id="view-chat">
+<div class="hero"><div class="eyebrow" id="groups-eyebrow">Comunidade privada</div><h1 id="groups-title">Grupos de motards</h1><p id="groups-desc">Cria o teu grupo, escolhe quem participa e conversa com os membros. Grupos reais necessitam de ligação segura online.</p></div>
+<div class="notice" id="groups-mode-notice" role="status">🧪 <b>Modo de demonstração:</b> grupos e mensagens ficam apenas neste telemóvel. Não são partilhados com outros motards.</div>
+<div class="card"><div class="row"><h2 class="heading" id="groups-create-title">🔒 Criar grupo privado</h2><span class="pill" id="groups-mode-pill">LOCAL</span></div>
+<label class="field" for="group-name" id="groups-name-label">Nome do grupo</label><input id="group-name" class="input" maxlength="50" placeholder="Ex.: Motards do Valais"/>
+<label class="field" for="group-desc" id="groups-desc-label">Descrição (opcional)</label><input id="group-desc" class="input" maxlength="240" placeholder="Ex.: Passeios aos domingos"/>
+<button class="btn" id="group-create" type="button" style="width:100%">+ Criar grupo</button></div>
+<div class="card"><h2 class="heading" id="groups-my-title">Os meus grupos</h2><div id="groups-list"><p class="tiny muted">Ainda não tens grupos.</p></div>
+<div id="groups-join-wrap" hidden><label class="field" for="group-code" id="groups-code-label">Código de convite privado</label><input id="group-code" class="input" autocomplete="off" spellcheck="false" placeholder="Código enviado pelo administrador"/><button class="btn outline" id="group-join" type="button" style="width:100%">Entrar com convite</button></div>
+</div>
+<div class="card" id="group-chat-card" hidden><div class="row"><div><h2 class="heading" id="selected-group-name">Grupo</h2><p class="tiny muted" id="selected-group-desc"></p></div><span class="pill" id="group-private-badge">🔒 Privado</span></div>
+<div class="buttons" style="margin:6px 0"><button class="btn ghost" id="group-copy-code" type="button">Copiar convite</button><button class="btn ghost" id="group-refresh" type="button">Atualizar chat</button></div>
+<p class="footnote" id="group-demo-warning">Modo local: o convite não funciona noutros telemóveis.</p>
+<div class="chatlog" id="group-chatlog" aria-live="polite"></div>
+<form class="send" id="group-send-form"><input id="group-message" maxlength="1000" required autocomplete="off" placeholder="Mensagem para o grupo..." aria-label="Mensagem privada"/><button type="submit" class="btn" aria-label="Enviar">➤</button></form>
+<button class="btn warn" id="group-leave" type="button" style="width:100%;margin-top:10px">Sair do grupo</button></div>
+<details class="card" id="groups-online-settings"><summary id="groups-real-title">🌐 Ativar grupos reais entre telemóveis (avançado)</summary>
+<p class="tiny muted" id="groups-real-explain">Para chat real, um administrador precisa de criar um projeto Supabase e aplicar as regras de privacidade incluídas no pacote ZIP. Sem servidor não é possível conversar entre telemóveis.</p>
+<label class="field" for="sb-url">Supabase Project URL</label><input class="input" id="sb-url" type="url" placeholder="https://xxxxx.supabase.co" autocapitalize="off"/>
+<label class="field" for="sb-key">Supabase Publishable / anon key (nunca service_role)</label><input class="input" id="sb-key" autocomplete="off" spellcheck="false" placeholder="sb_publishable_..."/>
+<button class="btn outline" id="sb-connect" type="button" style="width:100%">Ligar servidor</button>
+<hr style="border:0;border-top:1px solid var(--stroke);margin:18px 0"/>
+<p id="auth-status" class="tiny muted">Sem sessão online.</p>
+<label class="field" for="auth-nick" id="auth-nick-label">Nome visível no grupo</label><input class="input" id="auth-nick" maxlength="32" placeholder="Nome de motard"/>
+<label class="field" for="auth-email">Email</label><input class="input" id="auth-email" type="email" autocomplete="email"/>
+<label class="field" for="auth-password" id="auth-password-label">Palavra-passe</label><input class="input" id="auth-password" type="password" minlength="8" autocomplete="current-password"/>
+<div class="buttons"><button class="btn" id="sb-login" type="button">Entrar</button><button class="btn ghost" id="sb-signup" type="button">Criar conta</button><button class="btn warn" id="sb-logout" type="button">Sair</button></div>
+<p class="footnote" id="auth-footnote">O registo pode exigir confirmação por email. Os membros só podem ler chats dos grupos a que pertencem.</p></details>
+<div id="legacy-chat" hidden><div id="chatlog"></div><form id="chat-form"><input id="chat-input"/><button type="submit">OK</button></form></div>
+</section>
+<section class="screen" id="view-profile"><div class="hero"><div class="eyebrow">O teu espaço</div><h1>Perfil motard</h1><p>Personaliza a tua experiência. Os dados ficam guardados apenas neste dispositivo.</p></div>
+<div class="card"><div class="row"><div style="font-size:42px">🏍️</div><span class="pill">Perfil local de teste</span></div><label class="field" for="nick">Nome de motard</label><input class="input" id="nick" placeholder="Ex.: RiderValais" maxlength="32"/><label class="field" for="bike">A minha mota</label><input class="input" id="bike" placeholder="Ex.: Yamaha MT-07" maxlength="50"/><label class="field" for="canton">Cantão</label><select class="select" id="canton"><option value="VS">Valais (VS)</option><option value="VD">Vaud (VD)</option><option value="GE">Genebra (GE)</option><option value="BE">Berna (BE)</option><option value="FR">Friburgo (FR)</option><option value="ZH">Zurique (ZH)</option><option value="TI">Ticino (TI)</option><option value="GR">Grisões (GR)</option><option value="LU">Lucerna (LU)</option><option value="CH">Outro cantão</option></select><button class="btn" id="save-profile" style="width:100%">Guardar perfil</button></div>
+<div class="card privacy"><span>🔐</span><div><b>Privacidade em primeiro lugar</b><p class="tiny muted">A localização GPS só é solicitada quando carregas no botão GPS. O teu nome, rota e mensagens não são partilhados com outros utilizadores nesta demonstração.</p></div></div><div class="card"><div class="row"><div><b>Instalar no ecrã inicial</b><p class="tiny muted">Depois de publicar esta versão num endereço HTTPS, abre-a no Chrome e escolhe “Adicionar ao ecrã inicial”.</p></div><button id="install-btn" class="btn ghost">Instalar</button></div></div></section>
+<section class="screen" id="view-sos"><div class="hero"><div class="eyebrow">Segurança na viagem</div><h1>🆘 Emergência</h1><p>Prepara contactos de confiança e partilha a tua posição GPS quando precisas de ajuda.</p></div>
+<div class="card danger-card"><h2 class="heading">Precisas de ajuda agora?</h2><div class="buttons"><a class="btn sos-btn button-link" href="tel:112">📞 Ligar 112</a><a class="btn ghost button-link" href="tel:144">🚑 Ambulância 144</a></div><p class="tiny">Estes botões abrem o marcador do telemóvel; a chamada tem de ser confirmada no Android. Não dependas desta app numa emergência.</p></div>
+<div class="card"><div class="row"><h2 class="heading">📍 Posição para enviar</h2><button class="btn outline" id="sos-locate">Atualizar GPS</button></div><p id="sos-gps-status" class="tiny muted">Ainda não foi obtida uma posição GPS recente.</p><p id="sos-position" class="coords">—</p><div class="buttons"><button class="btn ghost" id="sos-share" disabled>Partilhar posição</button><button class="btn ghost" id="sos-copy" disabled>Copiar mensagem</button></div></div>
+<div class="card"><h2 class="heading">👥 Os meus 3 contactos</h2><p class="tiny muted">Os números ficam guardados apenas neste dispositivo. Introduz o indicativo, por exemplo +41.</p>
+<div id="sos-contacts"></div><button class="btn" id="sos-save" style="width:100%">Guardar contactos</button><div class="notice" style="margin-top:12px"><b>Envio manual:</b> depois de obteres o GPS, carrega no contacto e confirma o SMS na app Mensagens. Nenhum SMS ou chamada é enviado automaticamente.</div><div id="sos-sms-buttons" class="sos-sms-buttons"></div></div>
+<div class="card"><h3 class="subheading">⚠️ Deteção de acidente: ainda não disponível</h3><p class="tiny muted">Esta versão web não deteta acidentes de forma fiável e não pode fazer chamadas, enviar SMS sozinha ou continuar GPS garantidamente com o ecrã bloqueado. Estas funções exigem uma app Android nativa, permissões e testes rigorosos.</p></div></section>
+</main><nav class="nav" aria-label="Navegação"><button data-tab="map" class="active"><span>🗺️</span><span class="nav-label">Mapa</span></button><button data-tab="routes"><span>🧭</span><span class="nav-label">Rotas</span></button><button data-tab="chat"><span>🔒</span><span class="nav-label">Grupos</span></button><button data-tab="profile"><span>👤</span><span class="nav-label">Perfil</span></button><button data-tab="sos" class="sos-tab"><span>🆘</span><span class="nav-label">SOS</span></button></nav><div id="toast" class="toast" role="status"></div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+'use strict';
+const KEY='alpriders-demo-v1';
+const safeRead=(name, fallback)=>{try{const got=localStorage.getItem(KEY+name);return got?JSON.parse(got):fallback}catch{return fallback}};
+const save=(name,val)=>{try{localStorage.setItem(KEY+name,JSON.stringify(val))}catch{}};
+let points=[];let road=null;let map=null;let layerMarkers=null;let layerLine=null;let currentTab='map';
+let savedRoutes=safeRead('routes',[]);let chatMessages=safeRead('chat',[]);let profile=safeRead('profile',{nick:'',bike:'',canton:'VS'});
+const $=id=>document.getElementById(id);
+function toast(message){const el=$('toast');el.textContent=message;el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',3200)}
+function tab(t){currentTab=t;document.querySelectorAll('.screen').forEach(el=>el.classList.toggle('active',el.id==='view-'+t));document.querySelectorAll('.nav button').forEach(el=>el.classList.toggle('active',el.dataset.tab===t));window.scrollTo({top:0,behavior:'smooth'}); if(t==='map'&&map)setTimeout(()=>map.invalidateSize(),80); if(t==='routes')renderSaved()}
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+$('goto-routes').onclick=()=>tab('routes');
+function initMap(){if(typeof L==='undefined'){ $('mapstatus').textContent='Mapa indisponível. Verifica a ligação à Internet.';return;}
+ $('mapfallback').style.display='none';map=L.map('map',{zoomControl:false}).setView([46.82,8.25],8);
+ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
+ L.control.zoom({position:'bottomright'}).addTo(map);layerMarkers=L.layerGroup().addTo(map);layerLine=L.layerGroup().addTo(map);
+ map.on('click',ev=>{const p=[ev.latlng.lat,ev.latlng.lng];if(pinSelectActive){pinSelectActive=false;selectedPin=p;placePin(p);$('pin-status').textContent=`Ponto escolhido: ${p[0].toFixed(5)}, ${p[1].toFixed(5)}`;toast('Ponto de partida marcado. Volta acima e cria o passeio.');return;}
+if(points.length===12)return toast('Máximo de 12 pontos por rota.');points.push(p);road=null;draw();});draw();
+}
+function draw(){if(map&&layerMarkers&&layerLine){layerMarkers.clearLayers();layerLine.clearLayers();points.forEach((p,i)=>{const symbol=i===0?'P':i===points.length-1?'F':String(i+1);const marker=L.marker(p,{icon:L.divIcon({className:'',html:`<div style="display:grid;place-items:center;background:${i===0?'#fa8b42':'#52d1cf'};border:3px solid #0b2632;border-radius:50%;width:31px;height:31px;font-size:12px;font-weight:900;color:#11222e">${symbol}</div>`,iconSize:[31,31],iconAnchor:[15,15]})});marker.addTo(layerMarkers)});
+ if(road&&road.geometry&&road.geometry.length)L.polyline(road.geometry,{color:'#fa8b42',weight:6,opacity:.95}).addTo(layerLine);
+ else if(points.length>1)L.polyline(points,{color:'#52d1cf',weight:4,dashArray:'8 9'}).addTo(layerLine);
+}
+$('points-label').textContent=points.length+' pontos';$('points-count').textContent=points.length+' / 12 pontos';$('dist').textContent=road?road.distance+' km':'—';$('time').textContent=road?road.duration+' min':'—';$('route-message').textContent=road?'Traçado experimental calculado para automóveis.':points.length<2?'Marca pelo menos dois pontos no mapa.':'Linha pontilhada = ligação em linha reta, não uma estrada.';$('mapstatus').textContent=road?'Rota calculada (não é navegação para motos).':points.length?points.length+' pontos marcados · abre Rotas para continuar':'Toca no mapa para marcar os pontos da tua rota.';
+}
+function fit(){if(map&&points.length){map.fitBounds(points,{padding:[45,45],maxZoom:12})}}
+function quick(name){let r={crans:[[46.307,7.469],[46.232,7.361]],verbier:[[46.101,7.073],[46.095,7.216]],interlaken:[[46.686,7.863],[46.625,8.034]]}[name];points=r.map(p=>[...p]);road=null;draw();fit();toast('Rota de exemplo: toca em “Ver rota”.')}
+document.querySelectorAll('[data-quick]').forEach(b=>b.onclick=()=>quick(b.dataset.quick));
+function clearRoute(){points=[];road=null;draw()}
+$('clear-home').onclick=clearRoute;
+$('undo-point').onclick=()=>{points.pop();road=null;draw()};
+$('swissbutton').onclick=()=>{if(map)map.setView([46.82,8.25],8)};
+$('gpsbutton').onclick=()=>{if(!navigator.geolocation)return toast('GPS não suportado neste navegador.');toast('A solicitar acesso à localização…');navigator.geolocation.getCurrentPosition(p=>{const at=[p.coords.latitude,p.coords.longitude];if(map){L.circleMarker(at,{radius:9,color:'#fff',fillColor:'#fa8b42',fillOpacity:1,weight:3}).addTo(map).bindPopup('A tua posição (não partilhada)');map.setView(at,12)} toast('GPS obtido. A tua localização não foi partilhada.');},()=>toast('Não foi possível obter o GPS. Confirma as permissões do Chrome.'),{enableHighAccuracy:true,timeout:14000,maximumAge:4000})};
+async function calculate(){if(points.length<2)return toast('Marca a partida e o destino primeiro.');$('calc-route').disabled=true;$('calc-route').textContent='A calcular…';try{road=await requestRoadFor(points);draw();if(map)map.fitBounds(road.geometry,{padding:[25,25]});toast('Percurso estimado. Confirma as estradas antes de conduzir.')}catch{toast('Serviço de estradas indisponível. Mantive a linha entre os pontos.')}finally{$('calc-route').disabled=false;$('calc-route').textContent='Calcular estrada'}}
+$('calc-route').onclick=calculate;
+$('save-route').onclick=()=>{if(points.length<2)return toast('Marca pelo menos dois pontos.');let name=$('route-name').value.trim()||'Rota sem nome';const r={id:Date.now(),name,points:points.map(p=>[...p]),road:road?JSON.parse(JSON.stringify(road)):null,date:new Date().toLocaleDateString('pt-PT')};savedRoutes.unshift(r);save('routes',savedRoutes);renderSaved();toast('Guardada só neste telemóvel.')};
+const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function renderSaved(){ $('saved-count').textContent=savedRoutes.length+' guardadas';$('saved-list').innerHTML=savedRoutes.length?savedRoutes.map(r=>`<div class="listitem"><div class="listtitle">🛣️ ${escapeHTML(r.name)}</div><div class="tiny muted">${r.date} · ${r.points.length} pontos ${r.road?'· '+escapeHTML(r.road.distance)+' km':''}</div><div class="smallactions"><button data-load="${r.id}">Ver no mapa</button><button data-download="${r.id}">GPX</button><button data-delete="${r.id}">Eliminar</button></div></div>`).join(''):'<p class="tiny muted">Ainda não tens percursos guardados.</p>'; }
+$('saved-list').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const id=Number(b.dataset.load||b.dataset.delete||b.dataset.download);const r=savedRoutes.find(x=>x.id===id);if(!r)return;if(b.dataset.delete){savedRoutes=savedRoutes.filter(x=>x.id!==id);save('routes',savedRoutes);renderSaved();toast('Rota eliminada.')}else if(b.dataset.download)downloadGpx(r.points,r.name,r.road);else{points=r.points.map(p=>[...p]);road=r.road;draw();tab('map');setTimeout(fit,200)}});
+function downloadGpx(coords,name,road){const route=(road?.geometry?.length?road.geometry:coords);if(route.length<2)return toast('Marca pelo menos dois pontos.');const xml='<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="AlpRiders CH Demo" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>'+escapeHTML(name)+'</name><trkseg>'+route.map(p=>`<trkpt lat="${p[0]}" lon="${p[1]}"></trkpt>`).join('')+'</trkseg></trk></gpx>';const blob=new Blob([xml],{type:'application/gpx+xml'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(name.replace(/[^a-z0-9-_]/gi,'_')||'rota')+'.gpx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1200);toast('GPX criado. Verifica o percurso antes de sair.');}
+$('export-gpx').onclick=()=>downloadGpx(points,$('route-name').value||'Rota de moto',road);
+function renderChat(){let html='<div class="bubble system">Bem-vindo ao chat de teste da AlpRiders CH 🏍️</div>';html+=chatMessages.map(m=>`<div class="bubble">${escapeHTML(m.text)}<div class="bubblemeta">${escapeHTML(m.nick)} · ${escapeHTML(m.time)}</div></div>`).join('');$('chatlog').innerHTML=html;$('chatlog').scrollTop=$('chatlog').scrollHeight;}
+$('chat-form').onsubmit=e=>{e.preventDefault();const t=$('chat-input').value.trim();if(!t)return;chatMessages.push({text:t,nick:profile.nick||'Eu',time:new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})});chatMessages=chatMessages.slice(-100);save('chat',chatMessages);$('chat-input').value='';renderChat();toast('Mensagem guardada neste telemóvel.');};
+function populateProfile(){$('nick').value=profile.nick||'';$('bike').value=profile.bike||'';$('canton').value=profile.canton||'VS'}
+$('save-profile').onclick=()=>{profile={nick:$('nick').value.trim().slice(0,32),bike:$('bike').value.trim().slice(0,50),canton:$('canton').value};save('profile',profile);toast('Perfil guardado neste telemóvel.');};
+let deferredInstall=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e});$('install-btn').onclick=async()=>{if(deferredInstall){deferredInstall.prompt();deferredInstall=null}else toast('No Chrome: menu ⋮ → Adicionar ao ecrã inicial (após alojar em HTTPS).')};
+if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// Planeador automático: usa referências panorâmicas em território suíço;
+// escolhe waypoints e pede traçados ao servidor público OSRM (automóveis).
+const swissTowns = {
+ 'crans-montana':[46.307,7.469], 'sion':[46.232,7.360], 'martigny':[46.101,7.073], 'sierre':[46.291,7.535], 'monthey':[46.254,6.954], 'visp':[46.294,7.881], 'nendaz':[46.186,7.291], 'verbier':[46.098,7.225], 'aigle':[46.317,6.969], 'leukerbad':[46.379,7.628],
+ 'montreux':[46.431,6.911], 'lausanne':[46.520,6.633], 'lausana':[46.520,6.633], 'geneve':[46.205,6.144], 'genebra':[46.205,6.144],
+ 'interlaken':[46.686,7.864], 'bern':[46.948,7.447], 'berna':[46.948,7.447], 'lugano':[46.004,8.953],
+ 'davos':[46.801,9.836], 'chur':[46.851,9.532], 'zurich':[47.377,8.542],
+ 'lucerne':[47.050,8.309], 'luzerna':[47.050,8.309], 'zurique':[47.377,8.542], 'neuchatel':[46.991,6.931], 'fribourg':[46.806,7.161],
+ 'thun':[46.758,7.628], 'brig':[46.316,7.988], 'locarno':[46.169,8.799],
+ 'st. gallen':[47.425,9.376], 'schaffhausen':[47.696,8.635], 'gstaad':[46.475,7.287]
+};
+// Pontos de passagem aproximados, sem garantia de acesso ou abertura.
+const sights = [
+ {n:'Col de la Forclaz',p:[46.058,7.002],k:['curvas','panorama']},
+ {n:'Col des Mosses',p:[46.396,7.100],k:['curvas','panorama']},
+ {n:'Les Diablerets',p:[46.349,7.158],k:['panorama','curvas']},
+ {n:'Gstaad',p:[46.475,7.286],k:['panorama']},
+ {n:'Col du Pillon',p:[46.353,7.213],k:['curvas','panorama']},
+ {n:'Col de la Croix',p:[46.341,7.089],k:['curvas','panorama']},
+ {n:'Col des Planches',p:[46.128,7.077],k:['curvas']},
+ {n:'Col du Simplon',p:[46.250,8.034],k:['curvas','panorama']},
+ {n:'Grimselpass',p:[46.560,8.336],k:['curvas','panorama']},
+ {n:'Furkapass',p:[46.574,8.416],k:['curvas','panorama']},
+ {n:'Sustenpass',p:[46.729,8.448],k:['curvas','panorama']},
+ {n:'Nufenenpass',p:[46.477,8.387],k:['curvas','panorama']},
+ {n:'Oberalppass',p:[46.658,8.670],k:['curvas','panorama']},
+ {n:'Lukmanierpass',p:[46.563,8.796],k:['curvas','panorama']},
+ {n:'San Bernardino',p:[46.465,9.193],k:['curvas','panorama']},
+ {n:'Julierpass',p:[46.473,9.727],k:['curvas','panorama']},
+ {n:'Flüelapass',p:[46.750,9.946],k:['curvas','panorama']},
+ {n:'Maloja',p:[46.402,9.695],k:['curvas','panorama','lagos']},
+ {n:'Col du Marchairuz',p:[46.550,6.253],k:['curvas']},
+ {n:'Col du Mollendruz',p:[46.650,6.362],k:['curvas']},
+ {n:'Lac de Joux',p:[46.625,6.263],k:['lagos']},
+ {n:'Lac de Gruyère',p:[46.646,7.101],k:['lagos']},
+ {n:'Lac de Thoune',p:[46.680,7.715],k:['lagos']},
+ {n:'Lac de Brienz',p:[46.735,7.980],k:['lagos']},
+ {n:'Brünigpass',p:[46.758,8.136],k:['curvas','panorama']},
+ {n:'Schallenberg',p:[46.820,7.773],k:['curvas']},
+ {n:'Lac des Quatre-Cantons',p:[46.986,8.398],k:['lagos']},
+ {n:'Lac de Zurich',p:[47.243,8.680],k:['lagos']},
+ {n:'Appenzell',p:[47.331,9.409],k:['panorama']},
+ {n:'Lago Maggiore',p:[46.170,8.799],k:['lagos']},
+ {n:'Lago di Lugano',p:[45.996,8.946],k:['lagos']},
+ {n:'Val Verzasca',p:[46.212,8.830],k:['panorama']}
+];
+function normCity(s){return s.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ü/g,'u').replace(/œ/g,'oe').replace(/[^a-z0-9 .-]/g,'');}
+function kmBetween(a,b){const rad=Math.PI/180;const dl=(b[0]-a[0])*rad;const doo=(b[1]-a[1])*rad;const h=Math.sin(dl/2)**2+Math.cos(a[0]*rad)*Math.cos(b[0]*rad)*Math.sin(doo/2)**2;return 12742*Math.asin(Math.min(1,Math.sqrt(h)));}
+function validSwiss(p){return p[0]>=45.79&&p[0]<=47.81&&p[1]>=5.95&&p[1]<=10.54}
+async function findCity(raw){const key=normCity(raw);if(swissTowns[key])return swissTowns[key];
+  const url='https://photon.komoot.io/api/?q='+encodeURIComponent(raw+' Switzerland')+'&limit=8&lang=fr';
+  const response=await fetch(url,{signal:AbortSignal.timeout(13000)});
+  if(!response.ok)throw Error('geocode');const obj=await response.json();
+  const feature=(obj.features||[]).find(x=>{const p=x.properties||{};return String(p.countrycode||'').toUpperCase()==='CH' && ['city','town','village','municipality','locality','suburb'].includes(p.type||'')}) ||
+   (obj.features||[]).find(x=>String((x.properties||{}).countrycode||'').toUpperCase()==='CH');
+  if(!feature)throw Error('notfound');const coords=[feature.geometry.coordinates[1],feature.geometry.coordinates[0]];
+  if(!validSwiss(coords))throw Error('notfound');return coords;
+}
+async function requestRoadFor(waypoints){const str=waypoints.map(p=>p[1].toFixed(6)+','+p[0].toFixed(6)).join(';');
+  const resp=await fetch('https://router.project-osrm.org/route/v1/driving/'+str+'?overview=full&geometries=geojson&steps=true',{signal:AbortSignal.timeout(16000)});
+  if(!resp.ok)throw Error('routing');const data=await resp.json();const r=data.routes?.[0];if(!r)throw Error('routing');
+  return {geometry:r.geometry.coordinates.map(p=>[p[1],p[0]]),distance:(r.distance/1000).toFixed(1),duration:Math.round(r.duration/60), steps:(r.legs||[]).flatMap(leg=>(leg.steps||[]).map(st=>({p:[st.maneuver.location[1],st.maneuver.location[0]],type:st.maneuver.type||'',mod:st.maneuver.modifier||'',name:st.name||''}))) };
+}
+function scenicOptions(start,style,maxKm){const pool=sights.filter(s=>validSwiss(s.p)).map(s=>({...s,d:kmBetween(start,s.p)})).filter(s=>s.d>=6&&s.d<=maxKm);
+ const preferred=pool.filter(s=>style==='mix'||s.k.includes(style));return (preferred.length>=2?preferred:pool).sort((a,b)=>a.d-b.d);
+}
+const shuffleArray=a=>a.sort(()=>Math.random()-.5);
+let surpriseInProgress=false;
+async function makeSurprise(){
+ if(surpriseInProgress)return;const btn=$('surprise-button'),status=$('surprise-result');
+ surpriseInProgress=true;btn.disabled=true;btn.textContent='A criar passeio…';status.textContent='A procurar a localidade e as estradas panorâmicas…';
+ try{
+   const {start,label}=await resolveStartingPoint();const target=Number($('ride-hours').value),style=$('ride-style').value;
+   const maxRadius=Math.max(24,Math.min(95,target*.45));const pool=scenicOptions(start,style,maxRadius);
+   if(pool.length<1){status.textContent='Sem pontos panorâmicos próximos. Vou tentar criar um circuito rodoviário experimental nesta região.';}
+   const near=pool.filter(x=>x.d < maxRadius*.75);const primary=near.length?near:pool;
+   const attempts=[];const selected=shuffleArray([...primary]).slice(0,5);
+   for(const s of selected){
+     const secondChoices=pool.filter(t=>t.n!==s.n && kmBetween(s.p,t.p)>6 && kmBetween(s.p,t.p)<maxRadius*.85);
+     if(secondChoices.length){const other=secondChoices[Math.floor(Math.random()*secondChoices.length)];attempts.push([start,s.p,other.p,start]);}
+     attempts.push([start,s.p,start]);
+     if(attempts.length>=5)break;
+   }
+   // Circuitos de contingência geométricos: úteis quando não existem pontos curados perto.
+   // São apenas candidatos; só são apresentados depois de o motor calcular estradas reais.
+   if(attempts.length<3){
+     const radialKm=Math.max(7,Math.min(27,target/60*10));
+     for(let i=0;i<4;i++){const theta=(i*.58+Math.random()*1.8)*Math.PI;
+       const offset=(angle)=>[start[0]+radialKm*Math.sin(angle)/111.1,start[1]+radialKm*Math.cos(angle)/(111.1*Math.cos(start[0]*Math.PI/180))];
+       const a=offset(theta),b=offset(theta+.95),c=offset(theta+2.05);
+       if(validSwiss(a)&&validSwiss(b)&&validSwiss(c))attempts.push([start,a,b,c,start]);
+       if(attempts.length>=5)break;
+     }
+   }
+   let best=null, bestScore=Infinity;
+   for(let i=0;i<Math.min(attempts.length,5);i++){
+     status.textContent='A calcular opções '+(i+1)+' de '+Math.min(attempts.length,5)+'…';
+     const path=attempts[i];try{
+       const response=await requestRoadFor(path);
+       const score=Math.abs(response.duration-target)/Math.max(target,1);
+       if(score<bestScore){best={path,response};bestScore=score;}
+       if(score<0.18)break;
+     }catch(e){/* Serviço público pode limitar pedidos; tentar seguinte */}
+   }
+   if(!best){status.textContent='Não foi possível calcular uma rota por estrada. Confirma a ligação à Internet e tenta outra vez.';return;}
+   points=best.path.map(p=>[...p]);road=best.response;draw();
+   const name='Passeio surpresa desde '+label;$('route-name').value=name;
+   status.innerHTML='<b>🏍️ Passeio com regresso criado!</b><br>Partida e regresso: '+escapeHTML(label)+
+     '<br>Distância estimada: <b>'+road.distance+' km</b> · Tempo estimado: <b>'+road.duration+' min</b><br>'+
+     (Math.abs(road.duration-target)>target*.35?'<b>Atenção:</b> não corresponde à duração pedida. Experimenta outro passeio.<br>':'')+
+     'Percurso experimental. Verifica encerramentos, acessos e condições antes de conduzir.';
+   tab('map');if(map)setTimeout(()=>map.fitBounds(road.geometry,{padding:[35,35]}),160);
+   toast('Passeio criado! Podes guardá-lo em Rotas ou exportar GPX.');
+ }catch(e){status.textContent=e.message==='notfound'?'Localidade não encontrada na Suíça. Verifica o nome.':e.message==='pin'?'Escolhe primeiro o ponto exato no mapa.':e.message==='gps'?'Não consegui obter GPS. Permite a localização no Chrome e usa um endereço HTTPS.':'Não foi possível calcular o passeio. Confirma a ligação à Internet.';}
+ finally{surpriseInProgress=false;btn.disabled=false;btn.textContent='🎲 Criar outro passeio surpresa';}
+}
+$('surprise-button').onclick=makeSurprise;
+// Velocímetro GPS: disponível com permissão e origem segura; não é um instrumento certificado.
+let speedWatch=null;
+$('speed-button').onclick=()=>{
+  const button=$('speed-button');
+  if(speedWatch!==null){navigator.geolocation.clearWatch(speedWatch);speedWatch=null;button.textContent='Ativar GPS';$('speed-val').textContent='—';return;}
+  if(!navigator.geolocation||!window.isSecureContext){toast('O GPS contínuo exige autorização e página HTTPS.');return;}
+  button.textContent='A ligar GPS…';
+  speedWatch=navigator.geolocation.watchPosition(pos=>{
+    let speed=pos.coords.speed;
+    $('speed-val').textContent=(speed==null||speed<0)?'—':String(Math.round(speed*3.6));
+    onPosition(pos);
+    button.textContent='Parar GPS';
+  },()=>{toast('Não foi possível ativar GPS. Verifica as permissões.');if(speedWatch!==null)navigator.geolocation.clearWatch(speedWatch);speedWatch=null;button.textContent='Ativar GPS';},{enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+};
+
+
+// ---- Nova versão: partida GPS/ponto, navegação na página e SOS manual ----
+let selectedPin=null, pinSelectActive=false, startPinMarker=null, lastPosition=null, navActive=false, screenLock=null;
+const SOS_KEY='alpriders_sos_contacts_v1';
+let emergencyContacts=safeRead('sos-contacts',[{name:'',phone:''},{name:'',phone:''},{name:'',phone:''}]);
+function changeStartMode(){const mode=$('start-mode').value;$('town-fields').hidden=mode!=='town';$('pin-fields').hidden=mode!=='pin';if(mode==='pin')toast('Carrega em Selecionar no mapa para definir a partida.');}
+$('start-mode').addEventListener('change',changeStartMode);
+$('choose-pin').onclick=()=>{pinSelectActive=true;tab('map');$('mapstatus').textContent='Toca no mapa para definir a partida. Não marca o destino.';map?.invalidateSize();document.querySelector('.mapbox').scrollIntoView({behavior:'smooth',block:'center'});};
+function placePin(p){if(!map)return;if(startPinMarker)map.removeLayer(startPinMarker);startPinMarker=L.circleMarker(p,{radius:11,color:'#fff',fillColor:'#ffa95e',fillOpacity:1,weight:3}).addTo(map).bindPopup('Partida exata');}
+function locateNow(){return new Promise((resolve,reject)=>{if(!navigator.geolocation||!window.isSecureContext)return reject(new Error('gps'));navigator.geolocation.getCurrentPosition(pos=>{onPosition(pos);resolve(pos);},()=>reject(new Error('gps')),{enableHighAccuracy:true,timeout:16000,maximumAge:15000});});}
+async function resolveStartingPoint(){const mode=$('start-mode').value;
+ if(mode==='pin'){if(!selectedPin)throw new Error('pin');return {start:[...selectedPin],label:'ponto escolhido no mapa'};}
+ if(mode==='town'){const town=$('start-town').value.trim();if(!town)throw new Error('notfound');return {start:await findCity(town),label:town};}
+ const pos=(lastPosition && Date.now()-lastPosition.timestamp < 60000)?lastPosition:await locateNow();
+ const p=[pos.coords.latitude,pos.coords.longitude];if(!validSwiss(p))throw new Error('gps');return {start:p,label:'localização GPS atual'};
+}
+$('manual-map-start').onclick=()=>{$('start-mode').value='pin';changeStartMode();$('choose-pin').click()};
+$('manual-gps-start').onclick=async()=>{try{const pos=await locateNow();points=[[pos.coords.latitude,pos.coords.longitude]];road=null;draw();map?.setView(points[0],13);toast('Partida definida no teu GPS. Toca no mapa para marcar destino.');}catch{toast('Permite acesso ao GPS num site HTTPS.');}};
+function onPosition(pos){lastPosition=pos;const at=[pos.coords.latitude,pos.coords.longitude];
+ if(navActive&&map){map.panTo(at,{animate:true,duration:.5});updateNavigationUI(pos)}
+ if(currentTab==='sos')renderSosLocation();
+}
+async function enableGPSforNavigation(){if(speedWatch!==null){if(lastPosition)return;await locateNow();return;}
+ if(!navigator.geolocation||!window.isSecureContext)throw new Error('gps');
+ return new Promise((resolve,reject)=>{let first=true;
+ speedWatch=navigator.geolocation.watchPosition(pos=>{onPosition(pos);$('speed-val').textContent=pos.coords.speed==null?'—':String(Math.round(pos.coords.speed*3.6));$('speed-button').textContent='Parar GPS';if(first){first=false;resolve();}},err=>{if(first){first=false;reject(new Error('gps'));}else toast('Sinal GPS perdido.');},{enableHighAccuracy:true,maximumAge:1000,timeout:16000});
+ });}
+async function acquireWakeLock(){if(!navActive||document.visibilityState!=='visible'||!('wakeLock'in navigator))return;
+ try{screenLock=await navigator.wakeLock.request('screen');}catch{toast('O Android não permitiu manter o ecrã ligado.');}}
+function stopNavigation(){navActive=false;document.body.classList.remove('nav-mode');$('nav-next').textContent='Navegação terminada';if(screenLock){screenLock.release().catch(()=>{});screenLock=null;}if(map)setTimeout(()=>map.invalidateSize(),100);}
+$('nav-stop').onclick=stopNavigation;
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&navActive){acquireWakeLock();map?.invalidateSize();}});
+function closestPathIndex(path,p,minIndex=0){let best=minIndex,dist=Infinity;for(let i=minIndex;i<path.length;i++){let dx=(path[i][0]-p[0])*111;let dy=(path[i][1]-p[1])*111*Math.cos(p[0]*Math.PI/180);const d=dx*dx+dy*dy;if(d<dist){dist=d;best=i;}}return {i:best,metres:Math.sqrt(dist)*1000};}
+function guideText(step){if(!step)return 'Continua até ao destino';if(step.type==='arrive')return 'Chegada ao destino';if(step.type==='depart')return 'Segue pela estrada';if(step.type==='roundabout'||step.type==='rotary')return 'Entra na rotunda';
+ const mapWords={right:'Vira à direita',left:'Vira à esquerda','slight right':'Ligeiramente à direita','slight left':'Ligeiramente à esquerda',straight:'Segue em frente',uturn:'Faz inversão de marcha','sharp right':'Vira bem à direita','sharp left':'Vira bem à esquerda'};
+ return mapWords[step.mod]||'Continua o percurso';}
+function updateNavigationUI(pos){if(!road?.geometry?.length)return;const at=[pos.coords.latitude,pos.coords.longitude],geo=road.geometry;
+ const closest=closestPathIndex(geo,at);let next=null,idx=geo.length-1;
+ for(const s of road.steps||[]){if(s.type==='depart')continue;const near=closestPathIndex(geo,s.p,closest.i);if(near.i>closest.i){next=s;idx=near.i;break;}}
+ const trackMiss=closest.metres>150; let remain=0;for(let i=closest.i+1;i<=idx;i++){remain+=kmBetween(geo[i-1],geo[i])*1000;}
+ const kmh=pos.coords.speed==null?'—':Math.round(Math.max(0,pos.coords.speed*3.6));$('nav-kmh').textContent=kmh+' km/h';
+ $('nav-next').textContent=trackMiss?'Estás afastado do percurso':guideText(next);
+ $('nav-detail').textContent=trackMiss?'A orientação pode estar incorreta. Encosta em segurança para rever a rota.':
+ next?`Em aproximadamente ${Math.round(remain/10)*10} m${next.name?' · '+next.name:''} · GPS ±${Math.round(pos.coords.accuracy)} m`:'Aproximação ao fim do percurso · verifica o mapa';
+}
+$('nav-start').onclick=async()=>{if(!points.length||points.length<2)return toast('Cria primeiro uma rota ou um passeio surpresa.');
+ $('nav-start').disabled=true;$('nav-start').textContent='A preparar navegação…';
+ try{if(!road?.steps?.length)road=await requestRoadFor(points);draw();await enableGPSforNavigation();navActive=true;tab('map');document.body.classList.add('nav-mode');setTimeout(()=>map?.invalidateSize(),120);await acquireWakeLock();if(lastPosition)updateNavigationUI(lastPosition);toast('Navegação de TESTE nesta app. Não funciona garantidamente com ecrã bloqueado.');}
+ catch{toast('Navegação indisponível. Precisas de rota, Internet, HTTPS e permissão GPS.');}
+ finally{$('nav-start').disabled=false;$('nav-start').textContent='🧭 Iniciar navegação aqui';}
+};
+$('nav-sos').onclick=()=>tab('sos');$('map-sos').onclick=()=>tab('sos');
+function renderSosContacts(){const area=$('sos-contacts');area.replaceChildren();emergencyContacts.forEach((c,i)=>{const row=document.createElement('div');row.className='sos-contacts-row';
+ const label=document.createElement('b');label.textContent=`Contacto ${i+1}`;row.appendChild(label);
+ const n=document.createElement('input');n.className='input';n.id='sos-name-'+i;n.maxLength=40;n.placeholder='Nome';n.value=c.name||'';n.setAttribute('aria-label','Nome do contacto '+(i+1));row.appendChild(n);
+ const phone=document.createElement('input');phone.className='input';phone.id='sos-phone-'+i;phone.type='tel';phone.maxLength=22;phone.placeholder='Telefone com indicativo (ex.: +41...)';phone.value=c.phone||'';phone.setAttribute('aria-label','Número do contacto '+(i+1));row.appendChild(phone);area.appendChild(row);});renderSmsButtons();}
+function getFreshPosition(){return lastPosition&&Date.now()-lastPosition.timestamp<5*60*1000&&Number.isFinite(lastPosition.coords.accuracy)?lastPosition:null;}
+function positionMessage(){const p=getFreshPosition();if(!p)return '';
+ const lat=p.coords.latitude.toFixed(6),lng=p.coords.longitude.toFixed(6),acc=Math.round(p.coords.accuracy),t=new Date(p.timestamp).toLocaleString('pt-PT');
+ return `SOS — Preciso de ajuda / J'ai besoin d'aide. Posição GPS registada: ${lat}, ${lng} (precisão estimada ±${acc} m; ${t}). Mapa: https://maps.google.com/?q=${lat},${lng}. Se for uma emergência, contacta os serviços de socorro. / En cas d'urgence, contactez les secours.`;
+}
+function renderSosLocation(){const p=getFreshPosition();$('sos-gps-status').textContent=p?`Localização de ${new Date(p.timestamp).toLocaleTimeString('pt-PT')} · precisão estimada ±${Math.round(p.coords.accuracy)} m.`:'GPS indisponível ou desatualizado. Toca em «Atualizar GPS».';
+ $('sos-position').textContent=p?`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`:'—';$('sos-share').disabled=!p;$('sos-copy').disabled=!p;renderSmsButtons();}
+$('sos-locate').onclick=async()=>{$('sos-gps-status').textContent='A pedir localização…';try{await locateNow();renderSosLocation();toast('Localização GPS atualizada.');}catch{renderSosLocation();toast('GPS indisponível. Ativa a localização e abre a página por HTTPS.');}};
+$('sos-save').onclick=()=>{emergencyContacts=[0,1,2].map(i=>({name:($('sos-name-'+i).value||'').trim().slice(0,40),phone:($('sos-phone-'+i).value||'').trim().slice(0,22)}));
+ if(emergencyContacts.some(c=>c.phone&&!/^\+?[0-9 ()-]{6,22}$/.test(c.phone)))return toast('Verifica os números. Usa dígitos e indicativo +41.');
+ save('sos-contacts',emergencyContacts);renderSmsButtons();toast('Três contactos guardados neste telemóvel.');};
+function renderSmsButtons(){const container=$('sos-sms-buttons');container.replaceChildren();const body=positionMessage();for(const [i,c] of emergencyContacts.entries()){if(!c.phone)continue;const btn=document.createElement('a');btn.textContent=`✉️ Preparar SMS para ${c.name||'contacto '+(i+1)}`;
+ if(body){const phone=c.phone.replace(/[ ()-]/g,'');btn.href='sms:'+phone+'?body='+encodeURIComponent(body);btn.addEventListener('click',()=>toast('Confirma o envio na aplicação Mensagens.'));}else{btn.href='#';btn.addEventListener('click',e=>{e.preventDefault();toast('Obtém uma posição GPS recente antes de preparar o SMS.');});}
+ container.appendChild(btn);}if(!emergencyContacts.some(c=>c.phone)){const tip=document.createElement('p');tip.className='tiny muted';tip.textContent='Guarda pelo menos um número para preparar mensagens SOS.';container.appendChild(tip);}}
+$('sos-share').onclick=async()=>{const t=positionMessage();if(!t)return toast('Atualiza primeiro o GPS.');try{if(navigator.share)await navigator.share({title:'Localização SOS AlpRiders CH',text:t});else if(navigator.clipboard){await navigator.clipboard.writeText(t);toast('Mensagem copiada. Cola-a numa conversa.');}else toast('Usa a opção Copiar mensagem.');}catch{/* utilizador cancelou partilha */}};
+$('sos-copy').onclick=async()=>{const t=positionMessage();if(!t)return toast('Atualiza primeiro o GPS.');try{await navigator.clipboard.writeText(t);toast('Mensagem SOS copiada.');}catch{toast('Não foi possível copiar neste navegador.');}};
+const _tab=tab;
+tab=function(t){_tab(t);if(t==='sos'){renderSosLocation();}};
+renderSosContacts();changeStartMode();
+
+renderSaved();renderChat();populateProfile();initMap();draw();
+</script>
+<script>
+'use strict';
+// --- One touch GPS and navigation ---
+let combinedGpsOn=false;
+let currentMarker=null;
+function setCombinedGps(on){combinedGpsOn=on;
+  $('gps-one-button').textContent=on?tstr('🛑 Parar GPS + Navegação'):tstr('📍 Ligar GPS + Navegação');
+  $('gps-one-info').textContent=on?tstr('GPS ativo nesta página. Não é uma navegação certificada e pode parar com o ecrã bloqueado.'):tstr('Sem rota, o botão mostra a tua posição e velocidade. Cria um passeio para receber orientação experimental no mapa.');
+}
+$('gps-one-button').addEventListener('click',async()=>{
+ if(navActive){stopNavigation(); if(speedWatch!==null)$('speed-button').click();setCombinedGps(false);return;}
+ if(combinedGpsOn){if(speedWatch!==null)$('speed-button').click();setCombinedGps(false);return;}
+ if(!window.isSecureContext||!navigator.geolocation){toast(tstr('É necessário abrir a app por HTTPS e autorizar a localização.'));return;}
+ const button=$('gps-one-button');button.disabled=true;button.textContent=tstr('A ligar GPS…');
+ try{
+   if(speedWatch===null)await enableGPSforNavigation();else if(!lastPosition)await locateNow();
+   if(lastPosition&&map)map.setView([lastPosition.coords.latitude,lastPosition.coords.longitude],14);
+   setCombinedGps(true);
+   if(points.length>=2){$('nav-start').click();}
+   else toast(tstr('GPS ligado. Cria um passeio para iniciar a navegação.'));
+ }catch{setCombinedGps(false);toast(tstr('Não foi possível ligar o GPS. Confirma as permissões e usa HTTPS.'));}
+ finally{button.disabled=false;}
+});
+const previousPositionHandler=onPosition;
+onPosition=function(pos){previousPositionHandler(pos);
+  const s=pos.coords.speed;
+  $('gps-one-speed').textContent=(s==null||s<0)?'—':String(Math.round(s*3.6));
+  if(combinedGpsOn&&!navActive&&map){const p=[pos.coords.latitude,pos.coords.longitude];
+    if(currentMarker){currentMarker.setLatLng(p)}else{currentMarker=L.circleMarker(p,{radius:9,color:'#fff',fillColor:'#45d3c8',fillOpacity:1,weight:3}).addTo(map)}
+  }
+};
+const legacyStop=stopNavigation;
+stopNavigation=function(){legacyStop();setCombinedGps(false)};
+
+// --- Language support: all principal screens, group tools, actions ---
+const i18n = {
+// [French, Italian, Spanish, German, English] — Portuguese is the source UI
+'Idioma':['Langue','Lingua','Idioma','Sprache','Language'],
+'DEMONSTRAÇÃO':['DÉMO','DEMO','DEMO','DEMO','DEMO'],
+'RODAS LIVRES • SUÍÇA':['LIBERTÉ SUR DEUX ROUES • SUISSE','LIBERTÀ SU DUE RUOTE • SVIZZERA','LIBERTAD SOBRE RUEDAS • SUIZA','FREIHEIT AUF ZWEI RÄDERN • SCHWEIZ','TWO WHEELS • SWITZERLAND'],
+'A tua estrada começa aqui':['Ta route commence ici','Il tuo viaggio inizia qui','Tu ruta empieza aquí','Deine Fahrt beginnt hier','Your ride starts here'],
+'O passeio começa onde quiseres.':['Partez où vous voulez.','Parti da dove vuoi.','Sal desde donde quieras.','Starte, wo du möchtest.','Start your ride anywhere.'],
+'Parte do GPS atual, escolhe um ponto exato no mapa ou escreve uma localidade. Navegação experimental dentro da app.':['Utilise ton GPS, choisis un point sur la carte ou saisis une ville. Navigation expérimentale intégrée.','Usa il GPS, scegli un punto sulla mappa o scrivi una località. Navigazione sperimentale integrata.','Usa el GPS, elige un punto del mapa o escribe una ciudad. Navegación experimental integrada.','Starte mit GPS, wähle einen Kartenpunkt oder gib einen Ort ein. Experimentelle Navigation in der App.','Use GPS, choose a map point or enter a town. Experimental in-app navigation.'],
+'🎲 Surpreende-me':['🎲 Surprends-moi','🎲 Sorprendimi','🎲 Sorpréndeme','🎲 Überrasch mich','🎲 Surprise me'],
+'Passeio automático':['Balade automatique','Giro automatico','Ruta automática','Automatische Tour','Automatic ride'],
+'Escolhe como queres partir. A app tenta criar uma rota circular com partida e regresso ao ponto escolhido.':['Choisis le départ. L’app essaie de créer une boucle qui revient au point choisi.','Scegli la partenza. L’app tenta di creare un percorso ad anello.','Elige la salida. La app intenta crear una ruta circular.','Wähle deinen Start. Die App versucht, eine Rundtour zu erstellen.','Choose your starting point. The app attempts a round trip.'],
+'Partida':['Départ','Partenza','Salida','Start','Start'],
+'📍 Posição atual pelo GPS':['📍 Position GPS actuelle','📍 Posizione GPS attuale','📍 Ubicación GPS actual','📍 Aktueller GPS-Standort','📍 Current GPS location'],
+'🗺️ Escolher ponto no mapa':['🗺️ Choisir sur la carte','🗺️ Scegli sulla mappa','🗺️ Elegir en el mapa','🗺️ Punkt auf Karte wählen','🗺️ Choose point on map'],
+'🏘️ Escrever uma localidade':['🏘️ Saisir une ville','🏘️ Inserisci località','🏘️ Escribir localidad','🏘️ Ort eingeben','🏘️ Enter a town'],
+'Nome da localidade':['Nom de la ville','Nome località','Nombre de la localidad','Ortsname','Town name'],
+'Selecionar no mapa':['Choisir sur la carte','Seleziona sulla mappa','Seleccionar en mapa','Auf Karte wählen','Select on map'],
+'Ainda não escolheste nenhum ponto.':['Aucun point choisi.','Nessun punto selezionato.','Ningún punto seleccionado.','Kein Punkt gewählt.','No point selected.'],
+'Duração pretendida':['Durée souhaitée','Durata desiderata','Duración deseada','Gewünschte Dauer','Desired duration'],
+'1 hora':['1 heure','1 ora','1 hora','1 Stunde','1 hour'],
+'2 horas':['2 heures','2 ore','2 horas','2 Stunden','2 hours'],
+'3 horas':['3 heures','3 ore','3 horas','3 Stunden','3 hours'],
+'4 horas':['4 heures','4 ore','4 horas','4 Stunden','4 hours'],
+'Tipo de passeio':['Type de balade','Tipo di giro','Tipo de ruta','Tourart','Ride style'],
+'Surpresa':['Surprise','Sorpresa','Sorpresa','Überraschung','Surprise'],
+'Curvas e montanhas':['Virages et montagnes','Curve e montagne','Curvas y montañas','Kurven und Berge','Twists and mountains'],
+'Paisagens alpinas':['Paysages alpins','Paesaggi alpini','Paisajes alpinos','Alpenpanoramen','Alpine scenery'],
+'Lagos e vales':['Lacs et vallées','Laghi e valli','Lagos y valles','Seen und Täler','Lakes and valleys'],
+'🎲 Criar passeio surpresa':['🎲 Créer une balade surprise','🎲 Crea un giro a sorpresa','🎲 Crear ruta sorpresa','🎲 Überraschungstour erstellen','🎲 Create surprise ride'],
+'GPS + Navegação':['GPS + Navigation','GPS + Navigazione','GPS + Navegación','GPS + Navigation','GPS + Navigation'],
+'Um único botão para ligar o GPS, mostrar a velocidade e navegar nesta app quando houver uma rota.':['Un bouton pour activer le GPS, afficher la vitesse et suivre un trajet dans l’app.','Un tasto per GPS, velocità e navigazione nell’app quando esiste un percorso.','Un botón para activar GPS, ver velocidad y navegar en la app.','Eine Taste für GPS, Geschwindigkeit und Navigation in der App.','One button for GPS, speed and in-app navigation.'],
+'📍 Ligar GPS + Navegação':['📍 Activer GPS + Navigation','📍 Avvia GPS + Navigazione','📍 Activar GPS + Navegación','📍 GPS + Navigation starten','📍 Start GPS + Navigation'],
+'🛑 Parar GPS + Navegação':['🛑 Arrêter GPS + Navigation','🛑 Ferma GPS + Navigazione','🛑 Detener GPS + Navegación','🛑 GPS + Navigation stoppen','🛑 Stop GPS + Navigation'],
+'A ligar GPS…':['Connexion GPS…','Connessione GPS…','Conectando GPS…','GPS wird verbunden…','Connecting GPS…'],
+'Sem rota, o botão mostra a tua posição e velocidade. Cria um passeio para receber orientação experimental no mapa.':['Sans itinéraire, voir position et vitesse. Crée une balade pour le guidage expérimental.','Senza percorso, mostra posizione e velocità. Crea un giro per la guida sperimentale.','Sin ruta, muestra ubicación y velocidad. Crea una ruta para recibir indicaciones.','Ohne Route zeigt es Standort und Tempo. Erstelle eine Tour für experimentelle Führung.','Without a route, see your position and speed. Create a ride for experimental guidance.'],
+'GPS ativo nesta página. Não é uma navegação certificada e pode parar com o ecrã bloqueado.':['GPS actif ici. La navigation n’est pas certifiée et peut s’arrêter si l’écran se verrouille.','GPS attivo. Non è un navigatore certificato; può fermarsi a schermo bloccato.','GPS activo. No es navegación certificada y puede detenerse con pantalla bloqueada.','GPS aktiv. Keine zertifizierte Navigation; kann bei gesperrtem Bildschirm stoppen.','GPS running. Not certified navigation; may stop when the screen locks.'],
+'É necessário abrir a app por HTTPS e autorizar a localização.':['Ouvre l’app en HTTPS et autorise la localisation.','Apri in HTTPS e autorizza la posizione.','Abre por HTTPS y permite la ubicación.','Per HTTPS öffnen und Standort erlauben.','Open over HTTPS and allow location access.'],
+'GPS ligado. Cria um passeio para iniciar a navegação.':['GPS actif. Crée une balade pour naviguer.','GPS attivo. Crea un percorso per navigare.','GPS activo. Crea una ruta para navegar.','GPS aktiv. Erstelle eine Route zur Navigation.','GPS on. Create a ride to begin navigation.'],
+'GPS ligado; não foi possível iniciar a orientação da rota.':['GPS actif ; guidage de l’itinéraire indisponible.','GPS attivo; guida percorso non disponibile.','GPS activo; no se pudo iniciar la guía.','GPS aktiv; Routenführung nicht verfügbar.','GPS on; route guidance could not start.'],
+'Não foi possível ligar o GPS. Confirma as permissões e usa HTTPS.':['GPS indisponible. Vérifie les autorisations et HTTPS.','GPS non disponibile. Controlla permessi e HTTPS.','GPS no disponible. Revisa permisos y HTTPS.','GPS nicht verfügbar. Berechtigungen und HTTPS prüfen.','GPS unavailable. Check permissions and HTTPS.'],
+'🧭 Navegação dentro da app':['🧭 Navigation intégrée','🧭 Navigazione integrata','🧭 Navegación integrada','🧭 Navigation in der App','🧭 In-app navigation'],
+'A aguardar GPS…':['En attente du GPS…','In attesa del GPS…','Esperando GPS…','Warte auf GPS…','Waiting for GPS…'],
+'Terminar navegação':['Arrêter la navigation','Termina navigazione','Terminar navegación','Navigation beenden','End navigation'],
+'Mapa da Suíça':['Carte de Suisse','Mappa Svizzera','Mapa de Suiza','Schweiz-Karte','Swiss map'],
+'O mapa precisa de ligação à Internet.':['Carte : connexion Internet nécessaire.','La mappa richiede Internet.','El mapa necesita Internet.','Karte benötigt Internet.','Map needs internet.'],
+'🧭 Criar um percurso':['🧭 Créer un trajet','🧭 Crea un percorso','🧭 Crear ruta','🧭 Route erstellen','🧭 Create route'],
+'Marca a partida e o destino tocando no mapa, ou experimenta uma sugestão.':['Indique départ et arrivée sur la carte.','Seleziona partenza e arrivo sulla mappa.','Marca salida y llegada en el mapa.','Start und Ziel auf der Karte markieren.','Tap start and finish on the map.'],
+'Limpar':['Effacer','Cancella','Borrar','Löschen','Clear'],
+'Ver rota →':['Voir trajet →','Vedi percorso →','Ver ruta →','Route ansehen →','View route →'],
+'Planeia o passeio':['Planifie ta balade','Pianifica il giro','Planifica tu ruta','Plane deine Tour','Plan your ride'],
+'As minhas rotas':['Mes itinéraires','I miei percorsi','Mis rutas','Meine Routen','My routes'],
+'Nova rota':['Nouvel itinéraire','Nuovo percorso','Nueva ruta','Neue Route','New route'],
+'Distância estimada':['Distance estimée','Distanza stimata','Distancia estimada','Geschätzte Distanz','Estimated distance'],
+'Tempo estimado':['Temps estimé','Tempo stimato','Tiempo estimado','Geschätzte Zeit','Estimated time'],
+'Nome da rota':['Nom du trajet','Nome del percorso','Nombre de la ruta','Routenname','Route name'],
+'Calcular estrada':['Calculer l’itinéraire','Calcola percorso','Calcular ruta','Route berechnen','Calculate road route'],
+'Desfazer ponto':['Annuler point','Annulla punto','Deshacer punto','Punkt zurück','Undo point'],
+'Guardar no telemóvel':['Enregistrer sur ce téléphone','Salva sul telefono','Guardar en el móvil','Auf Handy speichern','Save on phone'],
+'Exportar GPX':['Exporter GPX','Esporta GPX','Exportar GPX','GPX exportieren','Export GPX'],
+'Percursos guardados':['Itinéraires enregistrés','Percorsi salvati','Rutas guardadas','Gespeicherte Routen','Saved routes'],
+'Comunidade privada':['Communauté privée','Comunità privata','Comunidad privada','Private Community','Private community'],
+'Grupos de motards':['Groupes de motards','Gruppi motociclisti','Grupos de moteros','Motorradgruppen','Rider groups'],
+'Cria o teu grupo, escolhe quem participa e conversa com os membros. Grupos reais necessitam de ligação segura online.':['Crée ton groupe privé et discute avec les membres. Un serveur sécurisé est nécessaire pour de vrais groupes.','Crea un gruppo privato e chatta. Per gruppi veri serve un server sicuro.','Crea grupos privados y conversa. Para conectar móviles se necesita servidor seguro.','Erstelle private Gruppen und chatte. Echte Gruppen benötigen einen sicheren Server.','Create private groups and chat. Real multi-device groups require a secure server.'],
+'Modo de demonstração:':['Mode démo :','Modalità demo:','Modo demo:','Demo-Modus:','Demo mode:'],
+'grupos e mensagens ficam apenas neste telemóvel. Não são partilhados com outros motards.':['les groupes et messages restent sur ce téléphone uniquement.','gruppi e messaggi rimangono su questo dispositivo.','los grupos y mensajes quedan solo en este móvil.','Gruppen und Nachrichten bleiben nur auf diesem Handy.','groups and messages stay on this device only.'],
+'🔒 Criar grupo privado':['🔒 Créer un groupe privé','🔒 Crea gruppo privato','🔒 Crear grupo privado','🔒 Private Gruppe erstellen','🔒 Create private group'],
+'Nome do grupo':['Nom du groupe','Nome gruppo','Nombre del grupo','Gruppenname','Group name'],
+'Descrição (opcional)':['Description (facultatif)','Descrizione (opzionale)','Descripción (opcional)','Beschreibung (optional)','Description (optional)'],
+'+ Criar grupo':['+ Créer groupe','+ Crea gruppo','+ Crear grupo','+ Gruppe erstellen','+ Create group'],
+'Os meus grupos':['Mes groupes','I miei gruppi','Mis grupos','Meine Gruppen','My groups'],
+'Ainda não tens grupos.':['Aucun groupe pour l’instant.','Nessun gruppo ancora.','Todavía no tienes grupos.','Noch keine Gruppen.','No groups yet.'],
+'Código de convite privado':['Code d’invitation privé','Codice invito privato','Código de invitación privado','Privater Einladungscode','Private invite code'],
+'Entrar com convite':['Rejoindre avec un code','Entra con invito','Entrar con invitación','Mit Code beitreten','Join with invite'],
+'🔒 Privado':['🔒 Privé','🔒 Privato','🔒 Privado','🔒 Privat','🔒 Private'],
+'Copiar convite':['Copier l’invitation','Copia invito','Copiar invitación','Einladung kopieren','Copy invite'],
+'Atualizar chat':['Actualiser le chat','Aggiorna chat','Actualizar chat','Chat aktualisieren','Refresh chat'],
+'Modo local: o convite não funciona noutros telemóveis.':['Mode local : l’invitation ne fonctionne pas sur d’autres téléphones.','Modalità locale: l’invito non funziona su altri telefoni.','Modo local: la invitación no funciona en otros móviles.','Lokal: Einladungen funktionieren nicht auf anderen Handys.','Local mode: invites do not work on other phones.'],
+'Sair do grupo':['Quitter le groupe','Esci dal gruppo','Salir del grupo','Gruppe verlassen','Leave group'],
+'🌐 Ativar grupos reais entre telemóveis (avançado)':['🌐 Activer les groupes réels (avancé)','🌐 Attiva gruppi reali (avanzato)','🌐 Activar grupos reales (avanzado)','🌐 Echte Gruppen aktivieren (erweitert)','🌐 Enable real groups (advanced)'],
+'Ligar servidor':['Connecter le serveur','Collega server','Conectar servidor','Server verbinden','Connect server'],
+'Sem sessão online.':['Non connecté.','Nessuna sessione online.','Sin sesión online.','Nicht angemeldet.','Not signed in.'],
+'Nome visível no grupo':['Pseudo visible','Nome visibile','Nombre visible','Anzeigename','Display name'],
+'Palavra-passe':['Mot de passe','Password','Contraseña','Passwort','Password'],
+'Entrar':['Connexion','Accedi','Entrar','Anmelden','Sign in'],
+'Criar conta':['Créer un compte','Crea account','Crear cuenta','Konto erstellen','Sign up'],
+'Sair':['Déconnexion','Esci','Salir','Abmelden','Sign out'],
+'O teu espaço':['Ton espace','Il tuo spazio','Tu espacio','Dein Bereich','Your space'],
+'Perfil motard':['Profil motard','Profilo motociclista','Perfil motero','Fahrerprofil','Rider profile'],
+'Perfil local de teste':['Profil de démo local','Profilo demo locale','Perfil demo local','Lokales Demo-Profil','Local demo profile'],
+'Nome de motard':['Pseudo motard','Nome motociclista','Nombre motero','Fahrername','Rider nickname'],
+'A minha mota':['Ma moto','La mia moto','Mi moto','Mein Motorrad','My bike'],
+'Cantão':['Canton','Cantone','Cantón','Kanton','Canton'],
+'Guardar perfil':['Enregistrer le profil','Salva profilo','Guardar perfil','Profil speichern','Save profile'],
+'Privacidade em primeiro lugar':['Vie privée d’abord','Privacy prima di tutto','Privacidad ante todo','Datenschutz zuerst','Privacy first'],
+'Instalar no ecrã inicial':['Installer sur l’écran d’accueil','Installa sulla schermata Home','Instalar en inicio','Zum Startbildschirm hinzufügen','Add to home screen'],
+'Instalar':['Installer','Installa','Instalar','Installieren','Install'],
+'Segurança na viagem':['Sécurité en route','Sicurezza in viaggio','Seguridad en ruta','Sicherheit auf Tour','Ride safety'],
+'🆘 Emergência':['🆘 Urgence','🆘 Emergenza','🆘 Emergencia','🆘 Notfall','🆘 Emergency'],
+'Precisas de ajuda agora?':['Besoin d’aide maintenant ?','Hai bisogno di aiuto?','¿Necesitas ayuda ahora?','Brauchst du jetzt Hilfe?','Need help now?'],
+'📞 Ligar 112':['📞 Appeler le 112','📞 Chiama 112','📞 Llamar 112','📞 112 anrufen','📞 Call 112'],
+'🚑 Ambulância 144':['🚑 Ambulance 144','🚑 Ambulanza 144','🚑 Ambulancia 144','🚑 Ambulanz 144','🚑 Ambulance 144'],
+'📍 Posição para enviar':['📍 Position à envoyer','📍 Posizione da inviare','📍 Ubicación para enviar','📍 Standort zum Teilen','📍 Location to share'],
+'Atualizar GPS':['Actualiser GPS','Aggiorna GPS','Actualizar GPS','GPS aktualisieren','Refresh GPS'],
+'Partilhar posição':['Partager la position','Condividi posizione','Compartir ubicación','Standort teilen','Share location'],
+'Copiar mensagem':['Copier le message','Copia messaggio','Copiar mensaje','Nachricht kopieren','Copy message'],
+'👥 Os meus 3 contactos':['👥 Mes 3 contacts','👥 I miei 3 contatti','👥 Mis 3 contactos','👥 Meine 3 Kontakte','👥 My 3 contacts'],
+'Guardar contactos':['Enregistrer contacts','Salva contatti','Guardar contactos','Kontakte speichern','Save contacts'],
+'Envio manual:':['Envoi manuel :','Invio manuale:','Envío manual:','Manueller Versand:','Manual sending:'],
+'⚠️ Deteção de acidente: ainda não disponível':['⚠️ Détection de chute indisponible','⚠️ Rilevamento incidenti non disponibile','⚠️ Detección de accidente no disponible','⚠️ Unfallerkennung nicht verfügbar','⚠️ Crash detection unavailable'],
+'Mapa':['Carte','Mappa','Mapa','Karte','Map'],
+'Rotas':['Trajets','Percorsi','Rutas','Routen','Routes'],
+'Grupos':['Groupes','Gruppi','Grupos','Gruppen','Groups'],
+'Perfil':['Profil','Profilo','Perfil','Profil','Profile'],
+'LOCAL':['LOCAL','LOCALE','LOCAL','LOKAL','LOCAL'],
+'Nome':['Nom','Nome','Nombre','Name','Name'],
+'Nome de motard':['Pseudo','Nickname','Apodo','Spitzname','Nickname'],
+'Eu':['Moi','Io','Yo','Ich','Me'],
+'Email':['E-mail','Email','Correo','E-Mail','Email'],
+'Mensagem para o grupo...':['Message au groupe…','Messaggio per gruppo…','Mensaje para el grupo…','Nachricht an Gruppe…','Message to group…'],
+'Ex.: Motards do Valais':['Ex. : Motards du Valais','Es.: Motociclisti del Vallese','Ej.: Moteros del Valais','Z. B. Motorradfahrer Wallis','E.g. Valais Riders'],
+'Ex.: Passeios aos domingos':['Ex. : sorties du dimanche','Es.: giri domenicali','Ej.: rutas los domingos','Z. B. Sonntagsfahrten','E.g. Sunday rides'],
+'Código enviado pelo administrador':['Code envoyé par l’admin','Codice dall’amministratore','Código del administrador','Code vom Admin','Code from the group admin'],
+};
+Object.assign(i18n,{
+'Cria, guarda e exporta percursos. Nesta versão ficam apenas neste telemóvel.':['Crée, enregistre et exporte des trajets sur ce téléphone.','Crea, salva ed esporta percorsi su questo telefono.','Crea, guarda y exporta rutas en este teléfono.','Routen erstellen, speichern und von diesem Handy exportieren.','Create, save and export routes on this phone.'],
+'Os números ficam guardados apenas neste dispositivo. Introduz o indicativo, por exemplo +41.':['Les numéros restent sur cet appareil. Ajoute l’indicatif +41.','I numeri restano sul dispositivo. Usa prefisso +41.','Los números quedan en el dispositivo. Usa +41.','Nummern bleiben auf dem Gerät. Mit +41 eingeben.','Numbers stay on this device. Include +41.'],
+'Prepara contactos de confiança e partilha a tua posição GPS quando precisas de ajuda.':['Prépare des contacts de confiance et partage ta position en cas de besoin.','Salva contatti fidati e condividi la posizione se hai bisogno di aiuto.','Configura contactos de confianza y comparte tu ubicación si necesitas ayuda.','Notfallkontakte speichern und bei Bedarf den Standort teilen.','Prepare trusted contacts and share your location when you need help.'],
+'Personaliza a tua experiência. Os dados ficam guardados apenas neste dispositivo.':['Personnalise ton profil. Les données restent sur cet appareil.','Personalizza il tuo profilo. Dati salvati solo su questo dispositivo.','Personaliza tu perfil. Los datos quedan en este dispositivo.','Passe dein Profil an. Daten bleiben auf diesem Gerät.','Customize your profile. Data stays on this device.'],
+'Os membros só podem ler chats dos grupos a que pertencem.':['Seuls les membres peuvent lire les conversations de leur groupe.','Solo i membri possono leggere i messaggi del loro gruppo.','Solo miembros pueden leer mensajes de su grupo.','Nur Mitglieder dürfen ihren Gruppenchat lesen.','Only members can read their group chats.'],
+'O registo pode exigir confirmação por email. Os membros só podem ler chats dos grupos a que pertencem.':['Une confirmation par e-mail peut être nécessaire. Seuls les membres accèdent aux chats de leurs groupes.','La registrazione può richiedere verifica email. Solo membri vedono i messaggi del gruppo.','Puede ser necesario confirmar por correo. Solo miembros ven su chat de grupo.','Registrierung erfordert ggf. E-Mail-Bestätigung. Nur Mitglieder lesen den Gruppenchat.','Email confirmation may be required. Only group members can read their messages.'],
+'Para chat real, um administrador precisa de criar um projeto Supabase e aplicar as regras de privacidade incluídas no pacote ZIP. Sem servidor não é possível conversar entre telemóveis.':['Pour le chat réel, un administrateur doit configurer Supabase avec les règles de sécurité du ZIP.','Per chat reale, un amministratore deve configurare Supabase con le regole nel ZIP.','Para chat real, un administrador debe configurar Supabase con las reglas del ZIP.','Für echten Chat muss ein Admin Supabase mit den Sicherheitsregeln im ZIP einrichten.','For real chat, an admin must configure Supabase and apply the security rules in the ZIP.'],
+'O registo pode exigir confirmação por email.':['La confirmation par email peut être requise.','Potrebbe servire conferma email.','Puede requerirse confirmación por correo.','E-Mail-Bestätigung kann nötig sein.','Email confirmation may be needed.'],
+'Os números ficam guardados apenas neste dispositivo.':['Les numéros restent sur cet appareil.','I numeri restano su questo dispositivo.','Los números quedan en este dispositivo.','Nummern bleiben auf diesem Gerät.','Numbers stay on this device.'],
+'Os contactos guardam-se apenas neste telemóvel.':['Les contacts restent sur ce téléphone.','I contatti restano su questo telefono.','Los contactos quedan en este móvil.','Kontakte bleiben auf diesem Handy.','Contacts remain on this phone.'],
+'Mantém a app aberta, com localização autorizada. Indicações aproximadas.':['Laisse l’app ouverte et autorise le GPS. Indications approximatives.','Tieni l’app aperta e autorizza il GPS. Indicazioni approssimative.','Mantén la app abierta y permite el GPS. Indicaciones aproximadas.','App geöffnet lassen und GPS erlauben. Nur ungefähre Anweisungen.','Keep the app open and allow GPS. Approximate guidance.'],
+'Este chat está vazio. Envia a primeira mensagem.':['Ce chat est vide. Envoie un message.','Chat vuota. Invia un messaggio.','Chat vacío. Envía un mensaje.','Der Chat ist leer. Schreibe etwas.','No messages yet. Start the conversation.'],
+'Online privado':['Privé en ligne','Privato online','Privado online','Privat online','Private online'],
+'Só neste telemóvel':['Sur cet appareil seulement','Solo su questo dispositivo','Solo en este móvil','Nur auf diesem Handy','This device only'],
+'Ligado: os grupos e mensagens são partilhados apenas com membros autorizados.':['Connecté : seules les personnes autorisées accèdent aux groupes et messages.','Connesso: solo membri autorizzati accedono ai gruppi e messaggi.','Conectado: solo miembros autorizados acceden a grupos y mensajes.','Verbunden: nur autorisierte Mitglieder lesen Gruppen und Nachrichten.','Connected: only authorized members can access groups and messages.'],
+'Copia o código e partilha-o apenas com quem quiseres no grupo.':['Partage le code uniquement avec les invités.','Condividi il codice solo con gli invitati.','Comparte el código solo con invitados.','Code nur an eingeladene Mitglieder geben.','Share the code only with invited members.'],
+'Apagar grupo para todos':['Supprimer pour tous','Elimina per tutti','Eliminar para todos','Gruppe für alle löschen','Delete group for everyone'],
+'Grupo de demonstração criado neste telemóvel.':['Groupe démo créé sur cet appareil.','Gruppo demo creato sul dispositivo.','Grupo demo creado en el móvil.','Demo-Gruppe auf diesem Handy erstellt.','Demo group created on this phone.'],
+'Grupo privado online criado. Partilha apenas o código de convite.':['Groupe privé créé. Partage le code avec les invités.','Gruppo privato creato. Condividi il codice solo con invitati.','Grupo privado creado. Comparte el código solo con invitados.','Private Gruppe erstellt. Code nur an Eingeladene geben.','Private online group created. Share the code only with invitees.'],
+'Introduz um email válido e palavra-passe de pelo menos 8 caracteres.':['E-mail valide et mot de passe de 8 caractères minimum.','Email valido e password di almeno 8 caratteri.','Correo válido y contraseña de mínimo 8 caracteres.','Gültige E-Mail und Passwort mit mindestens 8 Zeichen.','Use a valid email and password with at least 8 characters.'],
+'Código de convite inválido.':['Code d’invitation invalide.','Codice invito non valido.','Código de invitación inválido.','Ungültiger Einladungscode.','Invalid invite code.'],
+'Código copiado. Partilha-o apenas com os convidados.':['Code copié. Partage-le uniquement aux invités.','Codice copiato. Solo con gli invitati.','Código copiado. Solo con invitados.','Code kopiert. Nur mit Eingeladenen teilen.','Code copied. Share only with invitees.'],
+'Código de convite:':['Code d’invitation :','Codice invito:','Código de invitación:','Einladungscode:','Invite code:'],
+'Já fazes parte do grupo.':['Tu as rejoint le groupe.','Ora fai parte del gruppo.','Ya formas parte del grupo.','Du bist der Gruppe beigetreten.','You joined the group.'],
+'Tens a certeza?':['Es-tu sûr ?','Sei sicuro?','¿Estás seguro?','Bist du sicher?','Are you sure?'],
+'Entra numa conta online para usares convites.':['Connecte-toi pour utiliser un code.','Accedi per usare gli inviti.','Inicia sesión para usar invitaciones.','Für Einladungen bitte anmelden.','Sign in to use invites.'],
+'Entra na tua conta antes de criar grupos.':['Connecte-toi avant de créer des groupes.','Accedi prima di creare gruppi.','Inicia sesión antes de crear grupos.','Vor dem Erstellen bitte anmelden.','Sign in before creating groups.'],
+'Verifica o email para confirmar a conta antes de entrar.':['Confirme ton e-mail avant connexion.','Conferma l’email prima di accedere.','Confirma tu correo antes de entrar.','Bitte E-Mail vor Anmeldung bestätigen.','Confirm your email before signing in.'],
+'O nome do grupo precisa de pelo menos 3 caracteres.':['Le nom du groupe doit contenir au moins 3 caractères.','Il nome deve avere almeno 3 caratteri.','El nombre necesita al menos 3 caracteres.','Gruppenname mindestens 3 Zeichen.','Group name needs at least 3 characters.'],
+'Sessão online ativa.':['Session en ligne active.','Sessione online attiva.','Sesión online activa.','Online-Anmeldung aktiv.','Online session active.'],
+'Servidor ligado. Entra ou cria conta para ativar grupos online.':['Serveur connecté. Connecte-toi ou inscris-toi.','Server connesso. Accedi o registrati.','Servidor conectado. Entra o regístrate.','Server verbunden. Anmelden oder registrieren.','Server connected. Sign in or sign up.'],
+'Bem-vindo aos grupos online.':['Bienvenue dans les groupes en ligne.','Benvenuto nei gruppi online.','Bienvenido a los grupos online.','Willkommen bei Online-Gruppen.','Welcome to online groups.'],
+});
+const languages={pt:0,fr:0,it:1,es:2,de:3,en:4};
+let selectedLanguage=safeRead('lang','pt');if(!Object.hasOwn(languages,selectedLanguage))selectedLanguage='pt';
+const originalNodes=new WeakMap();const originalAttrs=new WeakMap();
+function tstr(v){return selectedLanguage==='pt'?v:(i18n[v]?.[languages[selectedLanguage]]||v)}
+function translatePage(){document.documentElement.lang=selectedLanguage;
+ let walker=document.createTreeWalker(document.querySelector('.app'),NodeFilter.SHOW_TEXT);
+ while(walker.nextNode()){
+  const node=walker.currentNode;
+  if(node.parentNode?.closest?.('#group-chatlog,#groups-list,.listitem'))continue;
+  const orig=originalNodes.get(node)??node.textContent.trim();if(!originalNodes.has(node))originalNodes.set(node,orig);
+  if(!Object.hasOwn(i18n,orig))continue;
+  const m=node.textContent.match(/^(\s*)(.*?)(\s*)$/s);node.textContent=(m?.[1]||'')+tstr(orig)+(m?.[3]||'');
+ }
+ for(const el of document.querySelectorAll('[placeholder],[aria-label],[title]')){
+  let old=originalAttrs.get(el);if(!old){old={};for(const a of ['placeholder','aria-label','title'])if(el.hasAttribute(a))old[a]=el.getAttribute(a);originalAttrs.set(el,old)}
+  for(const [key,v] of Object.entries(old))if(Object.hasOwn(i18n,v))el.setAttribute(key,tstr(v));
+ }
+ $('language-picker').value=selectedLanguage;
+}
+$('language-picker').value=selectedLanguage;
+$('language-picker').addEventListener('change',e=>{selectedLanguage=e.target.value;save('lang',selectedLanguage);translatePage();renderGroupUI();});
+
+// --- Private groups: on-device demo and optional secure online Supabase groups ---
+const groupKey='private-groups-v1';
+let localGroups=safeRead(groupKey,[]),currentGroupId=null, onlineGroups=[],groupSession=null,sb=null,online=false,groupChannel=null;
+let onlineConfig=safeRead('online-group-config',{url:'',key:''});
+$('sb-url').value=onlineConfig.url||'';$('sb-key').value=onlineConfig.key||'';
+$('auth-nick').value=profile.nick||'';
+function activeGroups(){return online?onlineGroups:localGroups}
+function activeGroup(){return activeGroups().find(g=>String(g.id)===String(currentGroupId))||null}
+function randomCode(){const alphabet='ABCDEFGHJKMNPQRSTUVWXYZ23456789';const array=new Uint8Array(24);crypto.getRandomValues(array);return Array.from(array,n=>alphabet[n%alphabet.length]).join('')}
+function makeChip(group){const b=document.createElement('button');b.type='button';b.className='group-chip'+(String(group.id)===String(currentGroupId)?' selected':'');
+ const name=document.createElement('b');name.textContent='🔒 '+group.name;b.append(name);
+ const sub=document.createElement('small');sub.textContent=(group.description||'')+' · '+(online?tstr('Online privado'):tstr('Só neste telemóvel'));b.append(sub);
+ b.addEventListener('click',()=>{currentGroupId=group.id;renderGroupUI();if(online)subscribeGroup(group.id)});return b;
+}
+function groupNotices(){const notice=$('groups-mode-notice');
+ if(online&&groupSession){notice.innerHTML='';notice.textContent='🔐 '+tstr('Ligado: os grupos e mensagens são partilhados apenas com membros autorizados.');}
+ else{notice.innerHTML='';const b=document.createElement('b');b.textContent=tstr('Modo de demonstração:');notice.append('🧪 ',b,' '+tstr('grupos e mensagens ficam apenas neste telemóvel. Não são partilhados com outros motards.'));}
+ $('groups-mode-pill').textContent=online?'ONLINE':tstr('LOCAL');$('groups-join-wrap').hidden=!online;
+ $('group-demo-warning').textContent=online?tstr('Copia o código e partilha-o apenas com quem quiseres no grupo.'):tstr('Modo local: o convite não funciona noutros telemóveis.');
+ $('group-copy-code').hidden=!online;
+ $('group-leave').textContent=online&&activeGroup()?.created_by===groupSession?.user?.id?tstr('Apagar grupo para todos'):tstr('Sair do grupo');
+}
+function renderGroupMessages(group){const box=$('group-chatlog');box.replaceChildren();const arr=group.messages||[];
+ if(!arr.length){const p=document.createElement('div');p.className='bubble system';p.textContent=tstr('Este chat está vazio. Envia a primeira mensagem.');box.append(p);}
+ else for(const message of arr){const bubble=document.createElement('div');bubble.className='bubble';
+  const para=document.createElement('div');para.textContent=message.body;const meta=document.createElement('div');meta.className='bubblemeta';
+  meta.textContent=(message.sender_name||'Motard')+' · '+new Date(message.created_at).toLocaleString(selectedLanguage,{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
+  bubble.append(para,meta);box.append(bubble)}box.scrollTop=box.scrollHeight;
+}
+function renderGroupUI(){groupNotices();const list=$('groups-list');list.replaceChildren();const gs=activeGroups();
+ if(!gs.length){const p=document.createElement('p');p.className='tiny muted';p.textContent=tstr('Ainda não tens grupos.');list.append(p)}
+ else for(const g of gs)list.append(makeChip(g));
+ if(currentGroupId&&!activeGroup())currentGroupId=null;
+ const g=activeGroup();$('group-chat-card').hidden=!g;
+ if(g){$('selected-group-name').textContent=g.name;$('selected-group-desc').textContent=g.description||'';
+ renderGroupMessages(g)}
+ translatePage();
+}
+$('group-create').onclick=async()=>{
+ const name=$('group-name').value.trim().slice(0,50),desc=$('group-desc').value.trim().slice(0,240);
+ if(name.length<3){toast(tstr('O nome do grupo precisa de pelo menos 3 caracteres.'));return;}
+ if(!online){const g={id:(crypto.randomUUID?.()||Date.now().toString(36)),name,description:desc,created_at:new Date().toISOString(),messages:[]};localGroups.unshift(g);save(groupKey,localGroups);currentGroupId=g.id;renderGroupUI();toast(tstr('Grupo de demonstração criado neste telemóvel.'));}
+ else{
+  if(!groupSession){toast(tstr('Entra na tua conta antes de criar grupos.'));return;}
+  const code=randomCode();const uid=groupSession.user.id;
+  const {data,error}=await sb.from('rider_groups').insert({name,description:desc,invite_code:code,created_by:uid}).select().single();
+  if(error){toast(tstr('Não foi possível criar grupo: ')+error.message);return;}
+  const membership=await sb.from('rider_group_members').insert({group_id:data.id,user_id:uid,role:'admin'});
+  if(membership.error){await sb.from('rider_groups').delete().eq('id',data.id);toast(tstr('Não foi possível confirmar a inscrição no grupo.'));return;}
+  currentGroupId=data.id;await fetchOnlineGroups();toast(tstr('Grupo privado online criado. Partilha apenas o código de convite.'));
+ }
+ $('group-name').value='';$('group-desc').value='';
+};
+$('group-send-form').addEventListener('submit',async e=>{e.preventDefault();const group=activeGroup();if(!group)return;
+ const text=$('group-message').value.trim().slice(0,1000);if(!text)return;
+ if(!online){group.messages.push({body:text,sender_name:profile.nick||tstr('Eu'),created_at:new Date().toISOString()});group.messages=group.messages.slice(-250);save(groupKey,localGroups);$('group-message').value='';renderGroupUI();}
+ else {if(!groupSession){toast(tstr('Tens de iniciar sessão.'));return;}
+ const result=await sb.from('rider_group_messages').insert({group_id:group.id,sender_id:groupSession.user.id,sender_name:($('auth-nick').value.trim()||profile.nick||'Motard').slice(0,32),body:text});
+ if(result.error){toast(result.error.message);return;}$('group-message').value='';await fetchMessages(group.id);}
+});
+$('group-refresh').onclick=async()=>{if(online&&activeGroup())await fetchMessages(activeGroup().id);else renderGroupUI();};
+$('group-copy-code').onclick=async()=>{const g=activeGroup();if(!online||!g)return toast(tstr('Os convites só funcionam nos grupos online.'));
+ try{await navigator.clipboard.writeText(g.invite_code);toast(tstr('Código copiado. Partilha-o apenas com os convidados.'));}catch{prompt(tstr('Código de convite:'),g.invite_code)};
+};
+$('group-leave').onclick=async()=>{const g=activeGroup();if(!g)return;
+ if(!confirm(tstr('Tens a certeza?')))return;
+ if(!online){localGroups=localGroups.filter(x=>x.id!==g.id);save(groupKey,localGroups);currentGroupId=null;renderGroupUI();return;}
+ if(!groupSession)return;
+ let resp;
+ if(g.created_by===groupSession.user.id)resp=await sb.from('rider_groups').delete().eq('id',g.id);
+ else resp=await sb.from('rider_group_members').delete().eq('group_id',g.id).eq('user_id',groupSession.user.id);
+ if(resp.error){toast(resp.error.message);return;}currentGroupId=null;await fetchOnlineGroups();
+};
+async function loadSB(){if(window.supabase?.createClient)return window.supabase;
+ return new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';script.onload=()=>window.supabase?.createClient?resolve(window.supabase):reject(Error('library'));script.onerror=()=>reject(Error('connection'));document.head.append(script)});
+}
+async function connectBackend(){let url=$('sb-url').value.trim().replace(/\/$/,''),key=$('sb-key').value.trim();
+ if(!/^https:\/\/[\w-]+\.supabase\.co$/.test(url)||!key||/service_role/i.test(key)){toast(tstr('Usa o endereço HTTPS do Supabase e uma chave publishable/anon. Nunca uses a chave service_role.'));return;}
+ try{const sdk=await loadSB();sb=sdk.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true}});onlineConfig={url,key};save('online-group-config',onlineConfig);
+ const resp=await sb.auth.getSession();if(resp.error)throw resp.error;groupSession=resp.data.session;online=Boolean(groupSession);
+ $('auth-status').textContent=groupSession?tstr('Sessão online ativa.'):tstr('Servidor ligado. Entra ou cria conta para ativar grupos online.');
+ if(online)await fetchOnlineGroups();else renderGroupUI();toast(tstr('Servidor configurado.'));
+ }catch(err){online=false;sb=null;toast(tstr('Falha na ligação: ')+(err?.message||''));renderGroupUI()}
+}
+$('sb-connect').onclick=connectBackend;
+async function userAuth(signup){if(!sb){await connectBackend();if(!sb)return;}
+ const email=$('auth-email').value.trim(),password=$('auth-password').value,nick=$('auth-nick').value.trim().slice(0,32);
+ if(!email.includes('@')||password.length<8){toast(tstr('Introduz um email válido e palavra-passe de pelo menos 8 caracteres.'));return;}
+ const response=signup?await sb.auth.signUp({email,password,options:{data:{nick}}}):await sb.auth.signInWithPassword({email,password});
+ if(response.error){toast(response.error.message);return;}
+ const info=await sb.auth.getSession();groupSession=info.data.session;
+ if(groupSession){online=true;currentGroupId=null;await fetchOnlineGroups();$('auth-status').textContent=tstr('Sessão online ativa.');toast(tstr('Bem-vindo aos grupos online.'));}
+ else{online=false;renderGroupUI();toast(tstr('Verifica o email para confirmar a conta antes de entrar.'));}
+}
+$('sb-login').onclick=()=>userAuth(false);$('sb-signup').onclick=()=>userAuth(true);
+$('sb-logout').onclick=async()=>{if(sb)await sb.auth.signOut();groupSession=null;online=false;currentGroupId=null;onlineGroups=[];
+ if(groupChannel&&sb)await sb.removeChannel(groupChannel);groupChannel=null;renderGroupUI();$('auth-status').textContent=tstr('Sem sessão online.');};
+$('group-join').onclick=async()=>{if(!online||!groupSession)return toast(tstr('Entra numa conta online para usares convites.'));
+ const code=$('group-code').value.trim().toUpperCase();if(code.length!==24)return toast(tstr('Código de convite inválido.'));
+ const {data,error}=await sb.rpc('join_rider_group',{code_input:code});if(error){toast(error.message);return;}
+ currentGroupId=data;$('group-code').value='';await fetchOnlineGroups();toast(tstr('Já fazes parte do grupo.'));
+};
+async function fetchOnlineGroups(){if(!sb||!groupSession)return;
+ const memberResp=await sb.from('rider_group_members').select('group_id').eq('user_id',groupSession.user.id);
+ if(memberResp.error){toast(memberResp.error.message);return;}
+ const ids=memberResp.data.map(x=>x.group_id);
+ if(ids.length){const result=await sb.from('rider_groups').select('id,name,description,invite_code,created_by').in('id',ids).order('name');
+ if(result.error){toast(result.error.message);return;}onlineGroups=result.data.map(g=>({...g,messages:[]}));}
+ else onlineGroups=[];
+ if(!activeGroup())currentGroupId=null;
+ renderGroupUI();if(activeGroup()){await fetchMessages(currentGroupId);subscribeGroup(currentGroupId)}
+}
+async function fetchMessages(id){if(!online||!id)return;
+ const res=await sb.from('rider_group_messages').select('id,body,sender_name,created_at').eq('group_id',id).order('created_at',{ascending:false}).limit(150);
+ if(res.error){toast(res.error.message);return;}
+ const g=onlineGroups.find(x=>x.id===id);if(g){g.messages=res.data.reverse();if(String(currentGroupId)===String(id))renderGroupMessages(g)}
+}
+async function subscribeGroup(id){if(!sb||!id)return;
+ if(groupChannel)await sb.removeChannel(groupChannel);
+ await fetchMessages(id);
+ groupChannel=sb.channel('riders-group-'+id).on('postgres_changes',{event:'INSERT',schema:'public',table:'rider_group_messages',filter:'group_id=eq.'+id},()=>fetchMessages(id)).subscribe();
+}
+const originalTab=tab;tab=function(k){originalTab(k);if(k==='chat'&&online&&activeGroup())fetchMessages(currentGroupId)};
+renderGroupUI();translatePage();
+if(onlineConfig.url&&onlineConfig.key&&location.protocol==='https:'){setTimeout(()=>connectBackend().catch(()=>{}),600);}
+
+</script></body></html>
